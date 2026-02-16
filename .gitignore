@@ -1,0 +1,45 @@
+# Base de données
+db.sqlite3
+*.sqlite3
+*.db
+
+# Fichiers Python compilés
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Environnement virtuel
+virtuel/
+
+
+# Fichiers uploadés par les utilisateurs (à ignorer)
+/media/
+/media/*
+!/media/.gitkeep
+
+# Fichiers de configuration sensibles
+config/settings/local.py
+local_settings.py
+*.secret.json
+*.key
+secrets.py
+
+# Fichiers de logs
+*.log
+/logs/
+
+# Fichiers de cache
+.cache/
+*.cache
+
+# Django specific
+*.pot
+*.mo
+*.egg-info/
+dist/
+build/
+
+# Backups
+*.bak
+*.backup
