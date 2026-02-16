@@ -1,0 +1,294 @@
+{% extends 'Utilisateurs/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/Statistique/statistiques.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/Statistique/statistiques.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/Utilisateurs/dashboard.js' %}"></script> 
+{% endblock %}
+
+{% block content %}
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <h1>Statistiques Globales</h1>
+                    <p>Analyse détaillée des performances du service d'impression</p>
+                </div>
+            </header>
+            
+            <!-- KPIs Cards -->
+            <section class="stats-kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="kpi-content">
+                        <h3>Étudiants actifs</h3>
+                        <div class="kpi-value">{{ etudiants_actifs }}</div>
+                        <div class="kpi-trend {% if croissance_etudiants > 0 %}positive{% else %}negative{% endif %}">
+                            <i class="fas fa-arrow-{% if croissance_etudiants > 0 %}up{% else %}down{% endif %}"></i> 
+                            {{ croissance_etudiants|floatformat:1 }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-icon">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div class="kpi-content">
+                        <h3>Mémoires traités</h3>
+                        <div class="kpi-value">{{ memoires_traites }}</div>
+                        <div class="kpi-trend {% if croissance_memoires > 0 %}positive{% else %}negative{% endif %}">
+                            <i class="fas fa-arrow-{% if croissance_memoires > 0 %}up{% else %}down{% endif %}"></i> 
+                            {{ croissance_memoires|floatformat:1 }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="kpi-content">
+                        <h3>Chiffre d'affaires</h3>
+                        <div class="kpi-value">{{ chiffre_affaires }} FCFA</div>
+                        <div class="kpi-trend {% if croissance_ca > 0 %}positive{% else %}negative{% endif %}">
+                            <i class="fas fa-arrow-{% if croissance_ca > 0 %}up{% else %}down{% endif %}"></i> 
+                            {{ croissance_ca|floatformat:1 }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-icon">
+                        <i class="fas fa-percent"></i>
+                    </div>
+                    <div class="kpi-content">
+                        <h3>Taux de conversion</h3>
+                        <div class="kpi-value">{{ taux_conversion }}%</div>
+                        <div class="kpi-trend positive">
+                            <i class="fas fa-minus"></i> stable
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Statistiques par statut -->
+            <section class="status-stats-section">
+                <div class="status-stats-grid">
+                    <div class="status-stat-card">
+                        <div class="status-stat-icon pending">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="status-stat-content">
+                            <h4>En attente</h4>
+                            <div class="status-stat-value">{{ en_attente }}</div>
+                            <div class="status-stat-trend">{{ pourcentage_attente }}%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="status-stat-card">
+                        <div class="status-stat-icon processing">
+                            <i class="fas fa-spinner"></i>
+                        </div>
+                        <div class="status-stat-content">
+                            <h4>En traitement</h4>
+                            <div class="status-stat-value">{{ en_traitement }}</div>
+                            <div class="status-stat-trend">{{ pourcentage_traitement }}%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="status-stat-card">
+                        <div class="status-stat-icon delivered">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="status-stat-content">
+                            <h4>Livrés</h4>
+                            <div class="status-stat-value">{{ livres }}</div>
+                            <div class="status-stat-trend">{{ pourcentage_livres }}%</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Charts Grid -->
+            <section class="charts-grid">
+                <!-- Évolution des revenus -->
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3><i class="fas fa-chart-line"></i> Évolution des revenus</h3>
+                        <div class="chart-legend">
+                            <span class="legend-item">
+                                <span class="legend-color" style="background: #6a11cb;"></span>
+                                Revenus (FCFA)
+                            </span>
+                        </div>
+                    </div>
+                    <div class="chart-card-body">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Répartition par service -->
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3><i class="fas fa-chart-pie"></i> Répartition par service</h3>
+                    </div>
+                    <div class="chart-card-body">
+                        <canvas id="servicePieChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Mémoires par filière -->
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3><i class="fas fa-chart-bar"></i> Mémoires par filière</h3>
+                    </div>
+                    <div class="chart-card-body">
+                        <canvas id="filiereChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Nouveaux étudiants -->
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3><i class="fas fa-user-plus"></i> Nouveaux étudiants</h3>
+                        <div class="chart-legend">
+                            <span class="legend-item">
+                                <span class="legend-color" style="background: #27ae60;"></span>
+                                Inscriptions
+                            </span>
+                        </div>
+                    </div>
+                    <div class="chart-card-body">
+                        <canvas id="studentsChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- TABLEAU DES POINTS JOURNALIERS -->
+            <section class="table-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-calendar-day"></i> Points journaliers - 7 derniers jours</h2>
+                    <button class="refresh-btn" id="refreshDailyPoints">
+                        <i class="fas fa-sync-alt"></i> Actualiser
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Jour</th>
+                                <th>Date</th>
+                                <th>Revenus</th>
+                                <th>Paiements</th>
+                                <th>Nvx Étudiants</th>
+                                <th>Mémoires traités</th>
+                                <th>Livraisons</th>
+                                <th>Réductions</th>
+                                <th>Top paiement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for point in points_journaliers %}
+                            <tr>
+                                <td><span class="day-badge">{{ point.jour_semaine }}</span></td>
+                                <td>{{ point.date }}</td>
+                                <td class="amount">{{ point.revenus }} FCFA</td>
+                                <td class="text-center">{{ point.nb_paiements }}</td>
+                                <td class="text-center">{{ point.nb_nouveaux_etudiants }}</td>
+                                <td class="text-center">{{ point.nb_memoires_traites }}</td>
+                                <td class="text-center">{{ point.nb_memoires_livres }}</td>
+                                <td class="amount">{{ point.reductions }} FCFA</td>
+                                <td>
+                                    {% if point.top_paiement_nom != '-' %}
+                                    <div class="top-paiement-cell">
+                                        <span class="top-name">{{ point.top_paiement_nom }}</span>
+                                        <span class="top-amount">{{ point.top_paiement_montant }} FCFA</span>
+                                    </div>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- TABLEAU DES PERFORMANCES HEBDOMADAIRES -->
+            <section class="table-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-calendar-week"></i> Performances Hebdomadaires - 5 dernières semaines</h2>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Semaine</th>
+                                <th>Période</th>
+                                <th>Étudiants</th>
+                                <th>Mémoires</th>
+                                <th>Revenus</th>
+                                <th>Tombola</th>
+                                <th>Bénéfice estimé</th>
+                                <th>Évolution</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for semaine in performances_hebdomadaires %}
+                            <tr>
+                                <td><span class="week-badge">{{ semaine.semaine }}</span></td>
+                                <td>{{ semaine.periode }}</td>
+                                <td class="text-center">{{ semaine.etudiants }}</td>
+                                <td class="text-center">{{ semaine.memoires }}</td>
+                                <td class="amount">{{ semaine.revenus }} FCFA</td>
+                                <td class="amount">{{ semaine.tombola }} FCFA</td>
+                                <td class="amount highlight">{{ semaine.benefice }} FCFA</td>
+                                <td class="{% if semaine.evolution > 0 %}positive{% elif semaine.evolution < 0 %}negative{% else %}neutral{% endif %}">
+                                    {% if semaine.evolution > 0 %}
+                                    <i class="fas fa-arrow-up"></i>
+                                    {% elif semaine.evolution < 0 %}
+                                    <i class="fas fa-arrow-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-minus"></i>
+                                    {% endif %}
+                                    {{ semaine.evolution|floatformat:1 }}%
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+        </main>
+    
+    <script>
+        // Données des graphiques injectées depuis Django
+        const chartData = {
+            revenus: {{ revenus_par_jour|safe }},
+            labels: {{ labels_jours|safe }},
+            inscriptions: {{ inscriptions_par_jour|safe }},
+            servicesLabels: {{ services_labels|safe }},
+            servicesData: {{ services_data|safe }},
+            filieresLabels: {{ filieres_labels|safe }},
+            filieresData: {{ filieres_data|safe }}
+        };
+        
+        // Vérifier que les données sont valides
+        console.log('Chart Data loaded:', chartData);
+    </script>
+
+{% endblock %}

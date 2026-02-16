@@ -1,0 +1,868 @@
+{% extends 'Utilisateurs/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Paiements/liste_paiements.css' %}">
+{% endblock %}
+
+{% block content %} 
+<main class="main-content">
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <h1>Gestion des Tombola</h1>
+            <p>Suivi et gestion de tous les participants à la tombola</p>
+        </div>
+    </header>
+    
+    <!-- Statistiques rapides -->
+    <section class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-cash-register"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Revenus</h3>
+                <p class="stat-number">{{ total_montant|intcomma }} FCFA</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Participants</h3>
+                <p class="stat-number">{{ nb_tombola }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Gagnants Tombola</h3>
+                <p class="stat-number">{{ nb_gagnant }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total des reductions</h3>
+                <p class="stat-number">{{ montant_Perdu|intcomma }} FCFA</p>
+
+            </div>
+        </div>
+    </section>
+    
+    <!-- Contrôles et filtres -->
+    <section class="controls-section">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" id="filterForm">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label><i class="fas fa-search"></i> Recherche</label>
+                            <div class="search-box">
+                                <input type="text" name="search" id="searchInput" 
+                                       placeholder="Rechercher étudiant ou référence..."
+                                       value="{{ request.GET.search }}">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fas fa-filter"></i> Statut</label>
+                            <select name="statut" id="filterStatut" class="filter-select">
+                                <option value="">Tous les statuts</option>
+                                <option value="paye" {% if request.GET.statut == 'paye' %}selected{% endif %}>
+                                    ✅ Payé
+                                </option>
+                                <option value="attente" {% if request.GET.statut == 'attente' %}selected{% endif %}>
+                                    ⏳ En attente
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fas fa-graduation-cap"></i> Filière</label>
+                            <select name="filiere" id="filterFiliere" class="filter-select">
+                                <option value="">Toutes les filières</option>
+                                {% for filiere in filieres %}
+                                <option value="{{ filiere.id }}" 
+                                        {% if request.GET.filiere == filiere.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ filiere.nom }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label><i class="fas fa-graduation-cap"></i> Niveau</label>
+                            <select name="niveau" id="filterNiveau" class="filter-select">
+                                <option value="">Tous les niveaux</option>
+                                {% for niveau in niveaux %}
+                                <option value="{{ niveau.id }}"
+                                        {% if request.GET.niveau == niveau.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ niveau.niveau }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Période personnalisée (cachée par défaut) -->
+                    <div class="custom-period" id="customPeriod" style="display: none;">
+                        <div class="controls-grid">
+                            <div class="control-group">
+                                <label><i class="fas fa-calendar-day"></i> Date de début</label>
+                                <input type="date" name="date_debut" id="dateDebut" 
+                                       class="filter-select" value="{{ request.GET.date_debut }}">
+                            </div>
+                            
+                            <div class="control-group">
+                                <label><i class="fas fa-calendar-day"></i> Date de fin</label>
+                                <input type="date" name="date_fin" id="dateFin" 
+                                       class="filter-select" value="{{ request.GET.date_fin }}">
+                            </div>
+                            
+                            <div class="control-group">
+                                <label><i class="fas fa-money-bill-wave"></i> Montant min</label>
+                                <input type="number" name="montant_min" id="montantMin" 
+                                       class="filter-select" placeholder="Montant minimum"
+                                       value="{{ request.GET.montant_min }}">
+                            </div>
+                            
+                            <div class="control-group">
+                                <label><i class="fas fa-money-bill-wave"></i> Montant max</label>
+                                <input type="number" name="montant_max" id="montantMax" 
+                                       class="filter-select" placeholder="Montant maximum"
+                                       value="{{ request.GET.montant_max }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <div class="left-actions">
+                            <a href="{% url 'Liste_paiements' %}" class="btn-secondary" id="resetFilters">
+                                <i class="fas fa-redo"></i> Réinitialiser
+                            </a>
+                        </div>
+                        
+                        <div class="right-actions">
+                            <div class="export-buttons">
+                                <button type="button" class="btn-export" id="exportPDF">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </button>
+                                <button type="button" class="btn-export btn-export-excel" id="exportExcel">
+                                    <i class="fas fa-file-excel"></i> Excel
+                                </button>
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-filter"></i> Appliquer filtres
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Tableau des participants -->
+    <section class="payments-table-section">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-left">
+                    <h3><i class="fas fa-receipt"></i> Liste des participants</h3>
+                    <span class="total-count">{{ paiements|length }} participants</span>
+                </div>
+                <div class="card-header-right">
+                    <div class="quick-summary">
+                        <span class="summary-item">
+                            <i class="fas fa-money-bill-wave text-success"></i>
+                            <span class="summary-value">{{ total_montant|intcomma }} FCFA</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="paymentsTable" class="payments-table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAll">
+                                </th>  
+                                <th>Étudiant</th>
+                                <th>Filière</th>
+                                <th>Source</th>
+                                <th>Montant total</th>
+                                <th>Tombola</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTableBody">
+                            {% for paiement in paiements %}
+                            <tr data-id="{{ paiement.id }}" class="payment-row {% if paiement.statut %}status-paid{% else %}status-pending{% endif %}">
+                                <td>
+                                    <input type="checkbox" class="payment-checkbox" 
+                                           data-id="{{ paiement.id }}">
+                                </td>
+                                
+                                <td>
+                                    <div class="student-name-cell">
+                                        <div class="student-avatar-small">
+                                            {{ paiement.etudiant.first_name|first|upper }}{{ paiement.etudiant.last_name|first|upper }}
+                                        </div>
+                                        <div class="student-info">
+                                            <span class="student-name">{{ paiement.etudiant.last_name }} {{ paiement.etudiant.first_name }}</span>
+                                            <span class="student-email">{{ paiement.etudiant.email }}</span>
+                                            <span class="student-matricule">{{ paiement.etudiant.matricule|default:"N/A" }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="filiere-info">
+                                        <span class="filiere-name">{{ paiement.etudiant.filiere.nom|truncatechars:20 }}</span>
+                                        <span class="filiere-sigle">{{ paiement.etudiant.filiere.abreviation }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="payment-type-badge type-{{ paiement.source|lower }}">
+                                        <i class="fas 
+                                            {% if paiement.source == 'ESPECE' %}fa-money-bill
+                                            {% elif paiement.source == 'MOBILE_MONEY' %}fa-mobile-alt
+                                            {% elif paiement.source == 'WAVE_MONEY' %}fa-wave-square
+                                            {% else %}fa-money-bill-wave{% endif %}">
+                                        </i>
+                                        {{ paiement.get_source_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="amount-cell">
+                                        <span class="amount-value">{{ paiement.montant_total|intcomma }} FCFA</span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    {% if paiement.jeu_reduction %}
+                                    <span class="status-badge status-paid">
+                                        <i class="fas fa-check-circle"></i> OUI
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge status-pending">
+                                        <i class="fas fa-clock"></i> NON
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="date-cell">
+                                        <div class="payment-date">
+                                            {{ paiement.date_paiement|date:"d/m/Y" }}
+                                        </div>
+                                        <div class="payment-time">
+                                            {{ paiement.date_paiement|time:"H:i" }}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a class="action-icon-btn view"
+                                            href="{% url 'detail_paiement' paiement.id %}"
+                                            title="Voir détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        
+                                        {% if not paiement.statut %}
+                                        <button class="action-icon-btn validate"
+                                                data-id="{{ paiement.id }}"
+                                                data-amount="{{ paiement.montant_total }}"
+                                                data-reference="{{ paiement.reference }}"
+                                                title="Marquer comme payé">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        <a class="action-icon-btn edit"
+                                            href="#"
+                                            title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="13" class="text-center">
+                                    <div class="empty-state">
+                                        <i class="fas fa-money-bill-wave fa-3x"></i>
+                                        <h4>Aucun paiement trouvé</h4>
+                                        <p>Aucun paiement ne correspond à vos critères de recherche.</p>
+                                        <a href="#" class="btn-primary">
+                                            <i class="fas fa-plus"></i> Enregistrer un paiement
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div class="table-footer">
+                    <div class="pagination-info">
+                        Affichage de <span id="startRow">{{ page_obj.start_index }}</span> 
+                        à <span id="endRow">{{ page_obj.end_index }}</span> 
+                        sur <span id="totalRows">{{ paginator.count }}</span> paiements
+                    </div>
+                    
+                    <div class="pagination-controls">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="pagination-btn" id="prevPage">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        {% else %}
+                        <span class="pagination-btn disabled">
+                            <i class="fas fa-chevron-left"></i>
+                        </span>
+                        {% endif %}
+                        
+                        <span class="page-numbers">
+                            Page <span id="currentPage">{{ page_obj.number }}</span> 
+                            sur <span id="totalPages">{{ paginator.num_pages }}</span>
+                        </span>
+                        
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="pagination-btn" id="nextPage">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% else %}
+                        <span class="pagination-btn disabled">
+                            <i class="fas fa-chevron-right"></i>
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="rows-per-page">
+                        <label>Afficher :</label>
+                        <select id="rowsPerPage" onchange="changeRowsPerPage(this.value)">
+                            <option value="10" {% if paginate_by == 10 %}selected{% endif %}>10</option>
+                            <option value="25" {% if paginate_by == 25 %}selected{% endif %}>25</option>
+                            <option value="50" {% if paginate_by == 50 %}selected{% endif %}>50</option>
+                            <option value="100" {% if paginate_by == 100 %}selected{% endif %}>100</option>
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+    
+    <!-- Résumé sélection -->
+    <div class="selection-summary" id="selectionSummary" style="display: none;">
+        <div class="card">
+            <div class="card-body">
+                <div class="summary-content">
+                    <div class="summary-info">
+                        <i class="fas fa-money-check-alt"></i>
+                        <div>
+                            <span class="count" id="selectedCount">0</span> paiement(s) sélectionné(s)
+                            <div class="selected-amount" id="selectedAmount">0 FCFA</div>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-actions">
+                        <button class="btn-secondary btn-sm" id="deselectAll">
+                            <i class="fas fa-times"></i> Tout désélectionner
+                        </button>
+                        <button class="btn-primary btn-sm" id="markPaidSelected">
+                            <i class="fas fa-check"></i> Marquer comme payé
+                        </button>
+                        <button class="btn-warning btn-sm" id="sendReminders">
+                            <i class="fas fa-bell"></i> Envoyer rappels
+                        </button>
+                        <button class="btn-danger btn-sm" id="deleteSelected">
+                            <i class="fas fa-trash-alt"></i> Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal validation paiement -->
+<div class="modal" id="validatePaymentModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3><i class="fas fa-money-check-alt"></i> Validation de paiement</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="payment-details-preview">
+                <div class="payment-header">
+                    <div class="payment-amount-large">
+                        <span id="paymentAmountPreview">0</span> FCFA
+                    </div>
+                    <div class="payment-ref">
+                        Référence: <span id="paymentRefPreview"></span>
+                    </div>
+                </div>
+                
+                <div class="payment-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="confirmDate">Date de confirmation :</label>
+                            <input type="datetime-local" id="confirmDate" value="{% now 'Y-m-d\TH:i' %}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="paymentNotes">Notes (optionnel) :</label>
+                        <textarea id="paymentNotes" 
+                                  placeholder="Ajouter des notes sur ce paiement..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button class="btn-primary" id="confirmPayment">
+                <i class="fas fa-check"></i> Confirmer le paiement
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal historique paiement -->
+<div class="modal" id="historyPaymentModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3><i class="fas fa-history"></i> Historique du paiement</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="history-content" id="historyContent">
+                <!-- L'historique sera chargé dynamiquement -->
+                <div class="loading-history">
+                    <i class="fas fa-spinner fa-spin"></i> Chargement de l'historique...
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal confirmation suppression -->
+<div class="modal" id="deleteConfirmationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Confirmation de suppression</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <h4>Êtes-vous sûr ?</h4>
+            <p>Vous êtes sur le point de supprimer le paiement :</p>
+            <p class="payment-to-delete" id="paymentToDeleteRef"></p>
+            <p class="payment-amount" id="paymentToDeleteAmount"></p>
+            
+            <div class="warning-details">
+                <p><i class="fas fa-exclamation-circle"></i> Cette action supprimera également :</p>
+                <ul>
+                    <li>L'historique du paiement</li>
+                    <li>Toutes les données associées</li>
+                </ul>
+            </div>
+            <p class="warning-text">Cette action est irréversible et affectera les statistiques financières.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <form method="post" action="" id="deleteForm" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash-alt"></i> Supprimer définitivement
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal rapport financier -->
+<div class="modal" id="financialReportModal">
+    <div class="modal-content modal-xl">
+        <div class="modal-header">
+            <h3><i class="fas fa-chart-bar"></i> Rapport financier</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="report-options">
+                <div class="report-period">
+                    <h5>Période du rapport :</h5>
+                    <div class="period-options">
+                        <button class="period-btn active" data-period="month">Ce mois</button>
+                        <button class="period-btn" data-period="quarter">Ce trimestre</button>
+                        <button class="period-btn" data-period="year">Cette année</button>
+                        <button class="period-btn" data-period="custom">Personnalisée</button>
+                    </div>
+                </div>
+                
+                <div class="report-sections">
+                    <h5>Sections à inclure :</h5>
+                    <div class="section-options">
+                        <label><input type="checkbox" checked> Résumé financier</label>
+                        <label><input type="checkbox" checked> Paiements par statut</label>
+                        <label><input type="checkbox" checked> Évolution des revenus</label>
+                        <label><input type="checkbox"> Répartition par filière</label>
+                        <label><input type="checkbox"> Analyse des commissions</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="report-preview" id="reportPreview">
+                <!-- Le rapport sera généré ici -->
+                <div class="report-placeholder">
+                    <i class="fas fa-chart-bar fa-3x"></i>
+                    <p>Cliquez sur "Générer le rapport" pour voir un aperçu</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Fermer
+            </button>
+            <button class="btn-primary" id="generateReport">
+                <i class="fas fa-chart-bar"></i> Générer le rapport
+            </button>
+            <button class="btn-success" id="exportReportBtn">
+                <i class="fas fa-download"></i> Exporter en PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="{% static 'js/paiements/liste_paiements.js' %}"></script>
+
+<script>
+// Variables globales
+let selectedPayments = new Set();
+let selectedAmount = 0;
+
+// Fonction pour changer le nombre de lignes par page
+function changeRowsPerPage(value) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('paginate_by', value);
+    url.searchParams.set('page', 1);
+    window.location.href = url.toString();
+}
+
+// Gestion de la période personnalisée
+document.getElementById('filterPeriode').addEventListener('change', function(e) {
+    const customPeriod = document.getElementById('customPeriod');
+    if (e.target.value === 'custom') {
+        customPeriod.style.display = 'block';
+    } else {
+        customPeriod.style.display = 'none';
+    }
+});
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    
+    // Gestion de la période personnalisée
+    const periodeSelect = document.getElementById('filterPeriode');
+    if (periodeSelect.value === 'custom') {
+        document.getElementById('customPeriod').style.display = 'block';
+    }
+    
+    // Soumettre le formulaire lors du changement des filtres
+    document.querySelectorAll('#filterStatut, #filterFiliere, #filterNiveau, #filterAnnee, #filterPeriode, #filterTri, #filterJeuReduction').forEach(select => {
+        select.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    });
+    
+    // Sélection multiple
+    document.getElementById('selectAll').addEventListener('change', function(e) {
+        const checkboxes = document.querySelectorAll('.payment-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = e.target.checked;
+            updateSelection(checkbox);
+        });
+    });
+    
+    // Mise à jour de la sélection
+    document.querySelectorAll('.payment-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelection(this);
+        });
+    });
+    
+    // Bouton actualiser
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        window.location.reload();
+    });
+    
+    // Bouton rapport financier
+    document.getElementById('exportReport').addEventListener('click', function() {
+        document.getElementById('financialReportModal').classList.add('active');
+    });
+});
+
+// Mettre à jour la sélection
+function updateSelection(checkbox) {
+    const paymentId = checkbox.dataset.id;
+    const amountElement = checkbox.closest('tr').querySelector('.amount-value');
+    const amountText = amountElement ? amountElement.textContent : '0 FCFA';
+    const amount = parseFloat(amountText.replace(/[^0-9.-]+/g,"")) || 0;
+    
+    if (checkbox.checked) {
+        selectedPayments.add(paymentId);
+        selectedAmount += amount;
+    } else {
+        selectedPayments.delete(paymentId);
+        selectedAmount -= amount;
+    }
+    
+    updateSelectionSummary();
+}
+
+// Mettre à jour le résumé de sélection
+function updateSelectionSummary() {
+    const count = selectedPayments.size;
+    const summary = document.getElementById('selectionSummary');
+    const countElement = document.getElementById('selectedCount');
+    const amountElement = document.getElementById('selectedAmount');
+    
+    countElement.textContent = count;
+    amountElement.textContent = selectedAmount.toLocaleString() + ' FCFA';
+    
+    if (count > 0) {
+        summary.style.display = 'block';
+    } else {
+        summary.style.display = 'none';
+    }
+}
+
+// Actions sur les paiements
+document.addEventListener('click', function(e) {
+    // Valider un paiement
+    if (e.target.closest('.validate')) {
+        const btn = e.target.closest('.validate');
+        const paymentId = btn.dataset.id;
+        const amount = btn.dataset.amount;
+        const ref = btn.dataset.reference;
+        
+        document.getElementById('paymentAmountPreview').textContent = parseInt(amount).toLocaleString();
+        document.getElementById('paymentRefPreview').textContent = ref;
+        document.getElementById('confirmPayment').dataset.id = paymentId;
+        document.getElementById('validatePaymentModal').classList.add('active');
+    }
+    
+    // Voir l'historique
+    if (e.target.closest('.history')) {
+        const btn = e.target.closest('.history');
+        const paymentId = btn.dataset.id;
+        
+        // Charger l'historique via AJAX
+        fetch(`/paiements/${paymentId}/historique/`)
+            .then(response => response.json())
+            .then(data => {
+                let historyHtml = '<div class="history-list">';
+                data.historique.forEach(item => {
+                    historyHtml += `
+                        <div class="history-item">
+                            <div class="history-date">${item.date}</div>
+                            <div class="history-status ${item.statut ? 'paid' : 'pending'}">
+                                ${item.statut ? 'Payé' : 'En attente'}
+                            </div>
+                            <div class="history-amount">${item.montant} FCFA</div>
+                        </div>
+                    `;
+                });
+                historyHtml += '</div>';
+                document.getElementById('historyContent').innerHTML = historyHtml;
+                document.getElementById('historyPaymentModal').classList.add('active');
+            })
+            .catch(error => {
+                document.getElementById('historyContent').innerHTML = 
+                    '<div class="error-history">Erreur lors du chargement de l\'historique</div>';
+                document.getElementById('historyPaymentModal').classList.add('active');
+            });
+    }
+    
+    // Supprimer un paiement
+    if (e.target.closest('.delete')) {
+        const btn = e.target.closest('.delete');
+        const paymentId = btn.dataset.id;
+        const ref = btn.dataset.reference;
+        const amount = btn.closest('tr').querySelector('.amount-value').textContent;
+        
+        document.getElementById('paymentToDeleteRef').textContent = ref;
+        document.getElementById('paymentToDeleteAmount').textContent = amount;
+        document.getElementById('deleteForm').action = `/paiements/${paymentId}/supprimer/`;
+        document.getElementById('deleteConfirmationModal').classList.add('active');
+    }
+});
+
+// Actions de bouton
+document.getElementById('deselectAll')?.addEventListener('click', function() {
+    document.querySelectorAll('.payment-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+        updateSelection(checkbox);
+    });
+    document.getElementById('selectAll').checked = false;
+    selectedAmount = 0;
+    updateSelectionSummary();
+});
+
+// Marquer comme payé la sélection
+document.getElementById('markPaidSelected')?.addEventListener('click', function() {
+    if (selectedPayments.size === 0) {
+        alert('Veuillez sélectionner au moins un paiement.');
+        return;
+    }
+    
+    if (confirm(`Êtes-vous sûr de vouloir marquer ${selectedPayments.size} paiement(s) comme payé(s) ?`)) {
+        // Envoyer la requête AJAX
+        fetch('/paiements/marquer-paye-multiple/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ payment_ids: Array.from(selectedPayments) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`${data.count} paiement(s) marqué(s) comme payé(s) avec succès.`);
+                window.location.reload();
+            } else {
+                alert('Erreur lors de la validation.');
+            }
+        })
+        .catch(error => {
+            alert('Erreur de connexion au serveur.');
+        });
+    }
+});
+
+// Supprimer la sélection
+document.getElementById('deleteSelected')?.addEventListener('click', function() {
+    if (selectedPayments.size === 0) {
+        alert('Veuillez sélectionner au moins un paiement.');
+        return;
+    }
+    
+    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedPayments.size} paiement(s) ? Cette action est irréversible.`)) {
+        fetch('/paiements/supprimer-multiple/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ payment_ids: Array.from(selectedPayments) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`${data.count} paiement(s) supprimé(s) avec succès.`);
+                window.location.reload();
+            } else {
+                alert('Erreur lors de la suppression.');
+            }
+        })
+        .catch(error => {
+            alert('Erreur de connexion au serveur.');
+        });
+    }
+});
+
+// Confirmer la validation d'un paiement
+document.getElementById('confirmPayment')?.addEventListener('click', function() {
+    const paymentId = this.dataset.id;
+    const notes = document.getElementById('paymentNotes').value;
+    
+    fetch(`/paiements/${paymentId}/valider/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ notes: notes })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Paiement validé avec succès.');
+            document.getElementById('validatePaymentModal').classList.remove('active');
+            window.location.reload();
+        } else {
+            alert('Erreur lors de la validation.');
+        }
+    })
+    .catch(error => {
+        alert('Erreur de connexion au serveur.');
+    });
+});
+
+// Helper pour récupérer le cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Fermer les modals
+document.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        this.closest('.modal').classList.remove('active');
+    });
+});
+
+// Fermer modal en cliquant à l'extérieur
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,379 @@
+{% extends 'Utilisateurs/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Utilisateurs/detail_etudiant.css' %}">
+{% endblock %}
+
+{% block content %} 
+<main class="main-content">
+    <!-- En-tête -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <h1>Fiche Étudiant</h1>
+            <div class="breadcrumb">
+                <a href="{% url 'liste_etudiant' %}">Liste des étudiants</a> 
+                <i class="fas fa-chevron-right"></i> 
+                <span>{{ etudiant.last_name }} {{ etudiant.first_name }}</span>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <button class="btn-secondary" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i> Retour
+            </button>
+            <a href="#" class="btn-primary">
+                <i class="fas fa-edit"></i> Modifier
+            </a>
+            <button class="btn-danger" onclick="confirmDelete()">
+                <i class="fas fa-trash-alt"></i> Supprimer
+            </button>
+        </div>
+    </header>
+    
+    <!-- Section principale -->
+    <div class="student-detail-container">
+        <!-- Carte profil -->
+        <div class="card profile-card">
+            <div class="card-body">
+                <div class="profile-header">
+                    <div class="profile-avatar-large">
+                        {{ etudiant.first_name|first|upper }}{{ etudiant.last_name|first|upper }}
+                    </div>
+                    <div class="profile-info">
+                        <h2>{{ etudiant.last_name }} {{ etudiant.first_name }}</h2>
+                        <div class="profile-metadata">
+                            <span class="matricule">{{ etudiant.matricule }}</span>
+                            <span class="badge status-active">Actif</span>
+                            <span class="badge status-member">Membre</span>
+                        </div>
+                        <p class="profile-email">{{ etudiant.email }}</p>
+                    </div>
+                </div>
+                
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Inscrit depuis</span>
+                            <span class="stat-value">{{ etudiant.date_inscription|date:"d/m/Y" }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Niveau</span>
+                            <span class="stat-value">{{ etudiant.niveau.niveau }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Filière</span>
+                            <span class="stat-value">{{ etudiant.filiere.nom }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grille d'informations -->
+        <div class="info-grid">
+            <!-- Informations personnelles -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-user-circle"></i> Informations personnelles</h3>
+                </div>
+                <div class="card-body">
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">Nom complet</span>
+                            <span class="info-value">{{ etudiant.last_name }} {{ etudiant.first_name }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Matricule</span>
+                            <span class="info-value">{{ etudiant.matricule }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email</span>
+                            <span class="info-value">{{ etudiant.email }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Téléphone</span>
+                            <span class="info-value">{{ etudiant.contact|default:"Non renseigné" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Date d'inscription</span>
+                            <span class="info-value">{{ etudiant.date_inscription|date:"d/m/Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Informations académiques -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-graduation-cap"></i> Informations académiques</h3>
+                </div>
+                <div class="card-body">
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">Filière</span>
+                            <span class="info-value">{{ etudiant.filiere.nom }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Sigle</span>
+                            <span class="info-value">{{ etudiant.filiere.abreviation }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Niveau</span>
+                            <span class="info-value">{{ etudiant.niveau.niveau }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Année académique</span>
+                            <span class="info-value">{{ etudiant.annee_academique.annee_academique }}</span>
+                        </div>
+                        <div class="info-item full-width">
+                            <span class="info-label">Thème du mémoire</span>
+                            <span class="info-value">{{ etudiant.theme_memoire|default:"Non renseigné" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Informations financières -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-money-bill-wave"></i> Informations financières</h3>
+                    <span class="status-badge status-paid">Payé</span>
+                </div>
+                <div class="card-body">
+                    <div class="finance-stats">
+                        <div class="finance-item total">
+                            <span class="finance-label">Montant total</span>
+                            <span class="finance-value">{{ total_montant|floatformat:0 }} FCFA</span>
+                        </div>
+                        <div class="finance-grid">
+                            <div class="finance-item">
+                                <span class="finance-label">Frais impression</span>
+                                <span class="finance-value">{{ frais_impression|floatformat:0 }} FCFA</span>
+                            </div>
+                            <div class="finance-item">
+                                <span class="finance-label">Frais annexes</span>
+                                <span class="finance-value">{{ frais_annexe|floatformat:0 }} FCFA</span>
+                            </div>
+                            <div class="finance-item">
+                                <span class="finance-label">Commission</span>
+                                <span class="finance-value">{{ commission|floatformat:0 }} FCFA</span>
+                            </div>                             
+                        </div>
+                        <div class="payment-history">
+                            <h4><i class="fas fa-history"></i> Historique des paiements</h4>
+                            {% if paiements %}
+                            <div class="history-list">
+                                {% for paiement in paiements %}
+                                <div class="history-item">
+                                    <div class="history-date">{{ paiement.date_paiement|date:"d/m/Y" }}</div>
+                                    <div class="history-amount">{{ paiement.montant_total|floatformat:0 }} FCFA</div>
+                                    <div class="history-status status-{{ paiement.statut }}">{{ paiement.get_statut_display }}</div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-muted">Aucun paiement enregistré</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dossier et fichiers -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-folder-open"></i> Dossier & Fichiers</h3>
+                    {% if dossier.statut %}
+                    <span class="status-badge status-completed">Traité</span>
+                    {% else %}
+                    <span class="status-badge status-pending">En attente</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="file-info">
+                        <div class="file-item">
+                            <span class="file-label">Statut du dossier</span>
+                            <span class="file-value">
+                                {% if dossier.statut %}
+                                <i class="fas fa-check-circle text-success"></i> Traité
+                                {% else %}
+                                <i class="fas fa-clock text-warning"></i> En attente de traitement
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="file-item">
+                            <span class="file-label">Livraison</span>
+                            <span class="file-value">
+                                {% if dossier.livraison %}
+                                <i class="fas fa-check-circle text-success"></i> Livré
+                                {% else %}
+                                <i class="fas fa-truck text-info"></i> En attente de livraison
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if dossier.support_pdf %}
+                        <div class="file-item">
+                            <span class="file-label">Mémoire (PDF)</span>
+                            <span class="file-value">
+                                <a href="{{ dossier.support_pdf.url }}" target="_blank" class="file-link">
+                                    <i class="fas fa-file-pdf"></i> Télécharger le mémoire
+                                </a>
+                                <small class="text-muted">({{ dossier.support_pdf.size|filesizeformat }})</small>
+                            </span>
+                        </div>
+                        {% endif %}
+                        <div class="file-actions">
+                            <button class="btn-secondary btn-sm" onclick="uploadFile()">
+                                <i class="fas fa-upload"></i> Ajouter un fichier
+                            </button>
+                            <a href="#" class="btn-primary btn-sm">
+                                <i class="fas fa-print"></i> Imprimer le dossier
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal confirmation suppression -->
+<div class="modal" id="deleteConfirmationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Confirmation de suppression</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <h4>Êtes-vous sûr ?</h4>
+            <p>Vous êtes sur le point de supprimer l'étudiant :</p>
+            <p class="student-to-delete">{{ etudiant.last_name }} {{ etudiant.first_name }}</p>
+            <p class="warning-text">
+                Cette action est irréversible. Toutes les données associées (paiements, dossiers, fichiers) seront également supprimées.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <form method="post" action="#" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger">
+                    <i class="fas fa-trash-alt"></i> Supprimer définitivement
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal upload fichier -->
+<div class="modal" id="uploadFileModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-upload"></i> Ajouter un fichier</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="fileType">Type de fichier</label>
+                    <select id="fileType" class="form-control">
+                        <option value="memoire">Mémoire (PDF)</option>
+                        <option value="correction">Corrections</option>
+                        <option value="autre">Autre document</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fileUpload">Fichier</label>
+                    <input type="file" id="fileUpload" class="form-control" accept=".pdf,.doc,.docx,.jpg,.png">
+                    <small class="form-text text-muted">Taille max : 10MB. Formats acceptés : PDF, DOC, JPG, PNG</small>
+                </div>
+                <div class="form-group">
+                    <label for="fileDescription">Description (optionnelle)</label>
+                    <textarea id="fileDescription" class="form-control" rows="3" placeholder="Description du fichier..."></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button class="btn-primary" id="confirmUpload">
+                <i class="fas fa-upload"></i> Télécharger
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/Utilisateurs/detail_etudiant.js' %}"></script>
+<script>
+// Fonctions globales pour les modals
+function confirmDelete() {
+    document.getElementById('deleteConfirmationModal').classList.add('active');
+}
+
+function uploadFile() {
+    document.getElementById('uploadFileModal').classList.add('active');
+}
+
+// Fermer les modals
+document.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const modal = this.closest('.modal');
+        if (modal) modal.classList.remove('active');
+    });
+});
+
+// Fermer modals en cliquant à l'extérieur
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+});
+
+// Gestion de l'upload de fichier
+document.getElementById('confirmUpload')?.addEventListener('click', function() {
+    const fileInput = document.getElementById('fileUpload');
+    const fileType = document.getElementById('fileType').value;
+    const description = document.getElementById('fileDescription').value;
+    
+    if (!fileInput.files.length) {
+        alert('Veuillez sélectionner un fichier');
+        return;
+    }
+    
+    // Ici, vous pouvez ajouter la logique d'upload AJAX
+    console.log('Upload du fichier:', fileInput.files[0].name, 'Type:', fileType);
+    
+    // Simulation d'upload
+    setTimeout(() => {
+        alert('Fichier téléchargé avec succès !');
+        document.getElementById('uploadFileModal').classList.remove('active');
+        // Recharger la page ou mettre à jour l'interface
+        location.reload();
+    }, 1000);
+});
+</script>
+{% endblock %}

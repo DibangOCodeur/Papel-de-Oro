@@ -1,0 +1,1146 @@
+{% extends 'Utilisateurs/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Paiements/detail_paiement.css' %}">
+<link rel="stylesheet" href="{% static 'css/Paiements/qr_code.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+    <!-- Header avec navigation -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <a href="{% url 'Liste_paiements' %}" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h1>Détails du Paiement</h1>
+                <p>Référence : <strong>{{ paiement.reference }}</strong></p>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="window.print()">
+                    <i class="fas fa-print"></i> Imprimer
+                </button>
+                <!-- Bouton pour ouvrir le modal QR code en grand -->
+                {% if paiement.jeu_reduction and qr_code %}
+                <button class="btn-info" id="showQrCodeModalBtn">
+                    <i class="fas fa-expand"></i> Voir QR Code
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Indicateur de statut -->
+    <div class="status-indicator">
+        <div class="status-content">
+            <div class="status-badge-large {% if paiement.statut %}paid{% else %}pending{% endif %}">
+                <i class="fas {% if paiement.statut %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                {{ paiement.statut|yesno:"Payé,En attente" }}
+            </div>
+            <div class="status-details">
+                <span class="status-date">Créé le {{ paiement.date_paiement|date:"d/m/Y à H:i" }}</span>
+                {% if paiement.statut %}
+                <span class="status-date">Validé le {{ paiement.date_paiement|date:"d/m/Y à H:i" }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Grille principale -->
+    <div class="detail-grid">
+        <!-- Carte étudiant -->
+        <div class="card student-card">
+            <div class="card-header">
+                <h3><i class="fas fa-user-graduate"></i> Informations de l'étudiant</h3>
+            </div>
+            <div class="card-body">
+                <div class="student-profile">
+                    <div class="profile-avatar-large">
+                        {{ paiement.etudiant.first_name|first|upper }}{{ paiement.etudiant.last_name|first|upper }}
+                    </div>
+                    <div class="profile-info">
+                        <h4>{{ paiement.etudiant.last_name }} {{ paiement.etudiant.first_name }}</h4>
+                        <p class="profile-matricule">{{ paiement.etudiant.matricule|default:"N/A" }}</p>
+                        
+                        <div class="contact-info">
+                            <div class="contact-item">
+                                <i class="fas fa-envelope"></i>
+                                <span>{{ paiement.etudiant.email }}</span>
+                            </div>
+                            {% if paiement.etudiant.contact %}
+                            <div class="contact-item">
+                                <i class="fas fa-phone"></i>
+                                <span>{{ paiement.etudiant.contact }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="student-academic">
+                    <div class="academic-item">
+                        <span class="label">Filière</span>
+                        <span class="value">{{ paiement.etudiant.filiere.nom }}</span>
+                    </div>
+                    <div class="academic-item">
+                        <span class="label">Niveau</span>
+                        <span class="value">{{ paiement.etudiant.niveau.niveau }}</span>
+                    </div>
+                    <div class="academic-item">
+                        <span class="label">Année académique</span>
+                        <span class="value">{{ paiement.etudiant.annee_academique.annee_academique }}</span>
+                    </div>
+                </div>
+                
+                <div class="student-actions">
+                    <a href="{% url 'detail_etudiant' paiement.etudiant.id %}" class="btn-secondary btn-sm">
+                        <i class="fas fa-eye"></i> Voir profil
+                    </a>
+                    <a href="{% url 'Liste_paiements' %}?search={{ paiement.etudiant.matricule }}" class="btn-secondary btn-sm">
+                        <i class="fas fa-receipt"></i> Autres paiements
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte détails paiement -->
+        <div class="card payment-card">
+            <div class="card-header">
+                <h3><i class="fas fa-money-check-alt"></i> Détails du paiement</h3>
+            </div>
+            <div class="card-body">
+                <div class="payment-summary">
+                    <div class="total-amount">
+                        <span class="label">Montant total</span>
+                        <span class="amount">{{ paiement.montant_total|intcomma }} FCFA</span>
+                    </div>
+                    
+                    <div class="payment-method">
+                        <span class="label">Source de paiement</span>
+                        <span class="method-badge source-{{ paiement.source|lower }}">
+                            <i class="fas 
+                                {% if paiement.source == 'ESPECE' %}fa-money-bill
+                                {% elif paiement.source == 'MOBILE_MONEY' %}fa-mobile-alt
+                                {% elif paiement.source == 'WAVE_MONEY' %}fa-wave-square
+                                {% else %}fa-money-bill-wave{% endif %}">
+                            </i>
+                            {{ paiement.get_source_display }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="payment-breakdown">
+                    <h4>Détail des frais</h4>
+                    <div class="breakdown-list">
+                        <div class="breakdown-item">
+                            <span class="label">Frais d'impression</span>
+                            <span class="value">{{ paiement.frais_impression|intcomma }} FCFA</span>
+                        </div>
+                        
+                        {% if paiement.service_annexe %}
+                        <div class="breakdown-item">
+                            <span class="label">Service annexe</span>
+                            <span class="value">{{ paiement.frais_annexe|intcomma }} FCFA</span>
+                        </div>
+                        {% endif %}
+
+                        {% if paiement.intitule_annexes %}
+                        <div class="breakdown-item">
+                            <span class="label">Intitule annexe</span>
+                            <span class="value">{{ paiement.get_intitule_annexes_display }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="breakdown-item">
+                            <span class="label">Commission</span>
+                            <span class="value">{{ paiement.commission|intcomma }} FCFA</span>
+                        </div>
+
+
+                        {% if paiement.jeu_reduction %}
+                        <div class="breakdown-item reduction">
+                            <span class="label">Réduction jeu</span>
+                            <span class="value text-success">500 FCFA</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="breakdown-item total">
+                            <span class="label">Total</span>
+                            <span class="value">{{ paiement.montant_total|intcomma }} FCFA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte actions rapides -->
+        <div class="card actions-card">
+            <div class="card-header">
+                <h3><i class="fas fa-bolt"></i> Actions rapides</h3>
+            </div>
+            <div class="card-body">
+                <div class="actions-list">
+                    {% if not paiement.statut %}
+                    <button class="action-btn validate-action" id="quickValidate">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Valider le paiement</span>
+                    </button>
+                    {% else %}
+                    <button class="action-btn cancel-action" id="quickCancel">
+                        <i class="fas fa-ban"></i>
+                        <span>Annuler le paiement</span>
+                    </button>
+                    {% endif %}
+                    
+                    
+                    
+                    <button class="action-btn delete-action" id="quickDelete">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>Supprimer le paiement</span>
+                    </button>
+                </div>
+                
+                <!-- Section QR Code - Affichée seulement si jeu réduction est coché -->
+                {% if paiement.jeu_reduction and qr_code %}
+                <div class="qr-code-section">
+                    <div class="qr-code-title">
+                        <i class="fas fa-qrcode"></i>
+                        <h4>Jeu de Réduction</h4>
+                        {% if paiement.reduction_grattee %}
+                            {% if paiement.reduction_revealed %}
+                                <span class="badge badge-success">
+                                    Gratté - {{ paiement.reduction_percentage }}% de réduction
+                                </span>
+                            {% else %}
+                                <span class="badge badge-warning">À gratter</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-info">Disponible</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="qr-code-display-container">
+                        <img src="data:image/png;base64,{{ qr_code }}" 
+                            alt="QR Code Réduction" 
+                            class="qr-code-image-real">
+                        
+                        <div class="qr-code-details-mini">
+                            {% if paiement.reduction_revealed %}
+                                <div class="qr-code-detail-row">
+                                    <span class="qr-code-label">Réduction obtenue</span>
+                                    <span class="qr-code-value reduction">
+                                        {{ paiement.reduction_percentage }}%
+                                    </span>
+                                </div>
+                                <div class="qr-code-detail-row">
+                                    <span class="qr-code-label">Économie</span>
+                                    <span class="qr-code-value success">
+                                        -{{ paiement.montant_reduction|floatformat:0 }} FCFA
+                                    </span>
+                                </div>
+                            {% else %}
+                                <div class="qr-code-detail-row">
+                                    <span class="qr-code-label">Réduction</span>
+                                    <span class="qr-code-value">À découvrir</span>
+                                </div>
+                            {% endif %}
+                            <div class="qr-code-detail-row">
+                                <span class="qr-code-label">Référence</span>
+                                <span class="qr-code-value">{{ paiement.reference|truncatechars:12 }}</span>
+                            </div>
+                            <div class="qr-code-detail-row">
+                                <span class="qr-code-label">Montant initial</span>
+                                <span class="qr-code-value">{{ Montant_formate }} FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="qr-code-actions-mini">
+                            <button class="qr-code-action-btn btn-primary btn-sm" onclick="printQRCode()">
+                                <i class="fas fa-print"></i> Imprimer
+                            </button>
+                            <button class="qr-code-action-btn btn-secondary btn-sm" onclick="downloadQRCode()">
+                                <i class="fas fa-download"></i> Télécharger
+                            </button>
+                            {% if not paiement.reduction_grattee %}
+                            <a href="{% url 'scanner_qr_code' paiement.reference %}" 
+                            class="qr-code-action-btn btn-success btn-sm"
+                            target="_blank">
+                                <i class="fas fa-gem"></i> Gratter
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Carte historique -->
+        <div class="card history-card">
+            <div class="card-header">
+                <h3><i class="fas fa-history"></i> Historique du paiement</h3>
+                <button class="btn-refresh" id="refreshHistory">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="history-list" id="historyList">
+                    {% for historique in paiement.historiques.all|slice:":5" %}
+                    <div class="history-item">
+                        <div class="history-icon">
+                            <i class="fas 
+                                {% if historique.statut %}fa-check-circle text-success
+                                {% else %}fa-clock text-warning{% endif %}">
+                            </i>
+                        </div>
+                        <div class="history-content">
+                            <div class="history-title">
+                                Paiement {{ historique.statut|yesno:"validé,en attente" }}
+                            </div>
+                            <div class="history-details">
+                                <span class="history-date">{{ historique.date_historique|date:"d/m/Y à H:i" }}</span>
+                                <span class="history-amount">{{ historique.montant_total|intcomma }} FCFA</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-history">
+                        <i class="fas fa-history fa-2x"></i>
+                        <p>Aucun historique disponible</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if paiement.historiques.count > 5 %}
+                <div class="history-footer">
+                    <a href="#" class="view-all-history" id="viewAllHistory">
+                        Voir tout l'historique ({{ paiement.historiques.count }})
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Carte statistiques -->
+        <div class="card stats-card">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-line"></i> Statistiques</h3>
+            </div>
+            <div class="card-body">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Total payé par l'étudiant</span>
+                            <span class="stat-value">
+                                {{ Montant_formate|intcomma }} FCFA
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Commission totale</span>
+                            <span class="stat-value">{{ paiement.commission|intcomma }} FCFA</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-ticket-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Jeux réduction utilisés</span>
+                            <span class="stat-value">{{ paiement.jeu_reduction|yesno:"Oui,Non" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">A bénéficier d'une réduction</span>
+                            {% if paiement.reduction_grattee %}
+                                {% if paiement.reduction_revealed %}
+                                    {% if paiement.reduction_percentage == 0 %}
+                                    <span class="value text-echec">
+                                        Non - {{ paiement.reduction_percentage }}% de réduction
+                                    </span>
+                                    {% else %}
+                                    <span class="value text-success">
+                                        OUI - {{ paiement.reduction_percentage }}% de réduction
+                                    </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-warning">À gratter</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge badge-info">Disponible</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Economie</span>
+                            {% if paiement.reduction_grattee %}
+                                {% if paiement.reduction_revealed %}
+                                    {% if paiement.reduction_percentage %}
+                                    <span class="stat-value">{{ paiement.montant_reduction|floatformat:0 }} FCFA</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-warning">À gratter</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge badge-info">Disponible</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section facture -->
+    <section class="invoice-section">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-file-invoice-dollar"></i> Facture</h3>
+                <div class="header-actions">
+                    <button class="btn-secondary" id="previewInvoice">
+                        <i class="fas fa-eye"></i> Prévisualiser
+                    </button>
+                    <button class="btn-primary" id="downloadInvoice">
+                        <i class="fas fa-download"></i> Télécharger PDF
+                    </button>
+
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="invoice-preview" id="invoicePreview">
+                    <div class="invoice-header">
+                        <div class="company-info">
+                            <div class="company-logo">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div>
+                                <h3>DbgMemo [PapelDeOro]</h3>
+                                <p>Service d'impression de Mémoires</p>
+                                <p class="company-address">Cocody, Abidjan, Côte d'Ivoire</p>
+                            </div>
+                        </div>
+                        
+                        <div class="invoice-title">
+                            <h2>FACTURE</h2>
+                            <div class="invoice-number">
+                                N°: FAC-{{ paiement.reference }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="invoice-details">
+                        <div class="bill-from">
+                            <h4>Émetteur</h4>
+                            <p><strong>DbgMemo [PapelDeOro]</strong></p>
+                            <p>Service d'impression de Mémoires</p>
+                            <p>Téléphone: +225 01 40 79 93 73</p>
+                            <p>Email: dbg.minds@gmail.com</p>
+                        </div>
+                        
+                        <div class="bill-to">
+                            <h4>Client</h4>
+                            <p><strong>{{ paiement.etudiant.last_name }} {{ paiement.etudiant.first_name }}</strong></p>
+                            <p>Matricule: {{ paiement.etudiant.matricule|default:"N/A" }}</p>
+                            <p>Filière: {{ paiement.etudiant.filiere.nom }}</p>
+                            <p>Email: {{ paiement.etudiant.email }}</p>
+                            {% if paiement.etudiant.contact %}
+                            <p>Téléphone: {{ paiement.etudiant.contact }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="invoice-meta">
+                            <div class="meta-item">
+                                <span class="label">Date de facture:</span>
+                                <span class="value">{% now "d/m/Y" %}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Date d'échéance:</span>
+                                <span class="value">{{ paiement.date_paiement|date:"d/m/Y" }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Statut:</span>
+                                <span class="value status-badge-invoice {% if paiement.statut %}paid{% else %}pending{% endif %}">
+                                    {{ paiement.statut|yesno:"Payé,En attente" }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="invoice-items">
+                        <table class="invoice-table">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Quantité</th>
+                                    <th>Prix unitaire</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Impression et reliure de mémoire</td>
+                                    <td>1</td>
+                                    <td>{{ paiement.frais_impression|intcomma }} FCFA</td>
+                                    <td>{{ paiement.frais_impression|intcomma }} FCFA</td>
+                                </tr>
+                                
+                                {% if paiement.service_annexe %}
+                                <tr>
+                                    <td>{{ paiement.get_intitule_annexes_display }}</td>
+                                    <td>1</td>
+                                    <td>{{ paiement.frais_annexe|intcomma }} FCFA</td>
+                                    <td>{{ paiement.frais_annexe|intcomma }} FCFA</td>
+                                </tr>
+                                {% endif %}
+                                
+                                {% if paiement.jeu_reduction %}
+                                <tr>
+                                    <td>Jeu de réduction</td>
+                                    <td>1</td>
+                                    <td>500 FCFA</td>
+                                    <td>500 FCFA</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-right">Sous-total</td>
+                                    <td>{{ paiement.montant_total|intcomma }} FCFA</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-right">Commission</td>
+                                    <td>{{ paiement.commission|intcomma }} FCFA</td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td colspan="3" class="text-right">Total TTC</td>
+                                    <td>{{ paiement.montant_total|intcomma }} FCFA</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="invoice-notes">
+                        <div class="notes-section">
+                            <h5>Notes</h5>
+                            <p>Merci pour votre confiance. Pour toute question concernant cette facture, contactez notre service client.</p>
+                        </div>
+                        
+                        <div class="payment-info">
+                            <h5>Informations de paiement</h5>
+                            <p>Mode de paiement: {{ paiement.get_source_display }}</p>
+                            <p>Référence: {{ paiement.reference }}</p>
+                            {% if paiement.statut %}
+                            <p>Statut: <strong class="text-success">Payé</strong></p>
+                            {% else %}
+                            <p>Statut: <strong class="text-warning">En attente de paiement</strong></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="invoice-footer">
+                        <div class="signature">
+                            <p>Signature</p>
+                            <div class="signature-line"></div>
+                            <p>Service des Mémoires</p>
+                        </div>
+                        
+                        <div class="contact-info">
+                            <p><strong>Contact:</strong> +225 01 40 79 93 73</p>
+                            <p><strong>Email:</strong> dbg.minds@gmail.com</p>
+                            <p><strong>Site web:</strong> www.universite.com</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Modal validation -->
+<div class="modal" id="validateModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-check-circle"></i> Validation du paiement</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="validation-icon">
+                <i class="fas fa-money-check-alt"></i>
+            </div>
+            <h4>Confirmer la validation</h4>
+            <p>Vous êtes sur le point de valider le paiement :</p>
+            <p class="payment-ref">{{ paiement.reference }}</p>
+            <p class="payment-amount">{{ paiement.montant_total|intcomma }} FCFA</p>
+            
+            <div class="form-group">
+                <label for="validationNotes">Notes (optionnel) :</label>
+                <textarea id="validationNotes" placeholder="Ajouter des notes sur cette validation..."></textarea>
+            </div>
+            
+            <div class="confirmation-text">
+                <i class="fas fa-info-circle"></i> Cette action enverra une confirmation à l'étudiant.
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button class="btn-primary" id="confirmValidation">
+                <i class="fas fa-check"></i> Confirmer la validation
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal suppression -->
+<div class="modal" id="deleteModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Confirmation de suppression</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <h4>Êtes-vous sûr ?</h4>
+            <p>Vous êtes sur le point de supprimer le paiement :</p>
+            <p class="payment-ref">{{ paiement.reference }}</p>
+            <p class="payment-amount">{{ paiement.montant_total|intcomma }} FCFA</p>
+            
+            <div class="warning-details">
+                <p><i class="fas fa-exclamation-circle"></i> Cette action supprimera également :</p>
+                <ul>
+                    <li>L'historique du paiement</li>
+                    <li>Toutes les données associées</li>
+                    <li>Les statistiques liées</li>
+                </ul>
+            </div>
+            <p class="warning-text">Cette action est irréversible. L'étudiant sera notifié de cette suppression.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <form method="post" action="#" id="deleteForm">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger">
+                    <i class="fas fa-trash-alt"></i> Supprimer définitivement
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal QR Code en grand -->
+<div class="modal" id="qrCodeModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-qrcode"></i> QR Code Réduction</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="qr-code-large-container">
+                {% if qr_code %}
+                <img src="data:image/png;base64,{{ qr_code }}" 
+                     alt="QR Code Réduction" 
+                     class="qr-code-large">
+                {% endif %}
+                
+                <div class="qr-code-info-large">
+                    <div class="qr-code-info-item">
+                        <span class="label">Étudiant:</span>
+                        <span class="value">{{ paiement.etudiant.first_name }} {{ paiement.etudiant.last_name }}</span>
+                    </div>
+                    <div class="qr-code-info-item">
+                        <span class="label">Matricule:</span>
+                        <span class="value">{{ paiement.etudiant.matricule|default:"N/A" }}</span>
+                    </div>
+                    <div class="qr-code-info-item">
+                        <span class="label">Réduction:</span>
+                        <span class="value reduction">500 FCFA</span>
+                    </div>
+                    <div class="qr-code-info-item">
+                        <span class="label">Référence paiement:</span>
+                        <span class="value">{{ paiement.reference }}</span>
+                    </div>
+                    <div class="qr-code-info-item">
+                        <span class="label">Date:</span>
+                        <span class="value">{{ paiement.date_paiement|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="printQRCode()">
+                <i class="fas fa-print"></i> Imprimer
+            </button>
+            <button class="btn-primary" onclick="downloadQRCode()">
+                <i class="fas fa-download"></i> Télécharger
+            </button>
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal historique complet -->
+<div class="modal" id="fullHistoryModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3><i class="fas fa-history"></i> Historique complet</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="full-history-list" id="fullHistoryList">
+                <!-- L'historique complet sera chargé ici -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal envoi facture -->
+<div class="modal" id="sendInvoiceModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-paper-plane"></i> Envoi de facture</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="send-icon">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <h4>Envoyer la facture par email</h4>
+            <p>La facture sera envoyée à :</p>
+            <p class="recipient-email">{{ paiement.etudiant.email }}</p>
+            
+            <div class="form-group">
+                <label for="emailSubject">Sujet du message :</label>
+                <input type="text" id="emailSubject" value="Facture - {{ paiement.reference }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="emailMessage">Message personnalisé :</label>
+                <textarea id="emailMessage" rows="4">
+Bonjour {{ paiement.etudiant.first_name }},
+
+Veuillez trouver ci-joint la facture pour votre paiement de {{ paiement.montant_total|intcomma }} FCFA.
+
+Cordialement,
+Service des Mémoires
+                </textarea>
+            </div>
+            
+            <div class="send-options">
+                <label>
+                    <input type="checkbox" id="sendCopy" checked>
+                    M'envoyer une copie
+                </label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button class="btn-primary" id="confirmSendInvoice">
+                <i class="fas fa-paper-plane"></i> Envoyer la facture
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="{% static 'js/paiements/detail_paiement.js' %}"></script>
+
+<script>
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des modals
+    const modals = {
+        validate: document.getElementById('validateModal'),
+        delete: document.getElementById('deleteModal'),
+        qrcode: document.getElementById('qrCodeModal'),
+        fullHistory: document.getElementById('fullHistoryModal'),
+        sendInvoice: document.getElementById('sendInvoiceModal')
+    };
+    
+    // Ouvrir modals
+    document.getElementById('validatePaymentBtn')?.addEventListener('click', () => openModal('validate'));
+    document.getElementById('quickValidate')?.addEventListener('click', () => openModal('validate'));
+    document.getElementById('deletePaymentBtn')?.addEventListener('click', () => openModal('delete'));
+    document.getElementById('quickDelete')?.addEventListener('click', () => openModal('delete'));
+    document.getElementById('showQrCodeModalBtn')?.addEventListener('click', () => openModal('qrcode'));
+    document.getElementById('viewAllHistory')?.addEventListener('click', () => openModal('fullHistory'));
+    document.getElementById('sendInvoice')?.addEventListener('click', () => openModal('sendInvoice'));
+    
+    // Fermer modals
+    document.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.modal').classList.remove('active');
+        });
+    });
+    
+    // Fermer modal en cliquant à l'extérieur
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+    });
+    
+    // Valider le paiement
+    document.getElementById('confirmValidation')?.addEventListener('click', function() {
+        const notes = document.getElementById('validationNotes').value;
+        
+        fetch(`/paiements/${ {{ paiement.id }} }/valider/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ notes: notes })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Paiement validé avec succès. Un email a été envoyé à l\'étudiant.');
+                modals.validate.classList.remove('active');
+                window.location.reload();
+            } else {
+                alert('Erreur lors de la validation : ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Erreur de connexion au serveur.');
+        });
+    });
+    
+    // Générer facture PDF
+    document.getElementById('downloadInvoice')?.addEventListener('click', function() {
+        generateInvoicePDF();
+    });
+    
+    // Envoyer facture par email
+    document.getElementById('confirmSendInvoice')?.addEventListener('click', function() {
+        const subject = document.getElementById('emailSubject').value;
+        const message = document.getElementById('emailMessage').value;
+        const sendCopy = document.getElementById('sendCopy').checked;
+        
+        fetch(`/paiements/${ {{ paiement.id }} }/envoyer-facture/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ 
+                subject: subject,
+                message: message,
+                send_copy: sendCopy
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Facture envoyée avec succès.');
+                modals.sendInvoice.classList.remove('active');
+            } else {
+                alert('Erreur lors de l\'envoi : ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Erreur de connexion au serveur.');
+        });
+    });
+    
+    // Voir tout l'historique
+    document.getElementById('viewAllHistory')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        loadFullHistory();
+    });
+    
+    // Rafraîchir l'historique
+    document.getElementById('refreshHistory')?.addEventListener('click', function() {
+        refreshHistory();
+    });
+    
+    // Actions rapides
+    document.getElementById('generateInvoice')?.addEventListener('click', function() {
+        generateInvoicePDF();
+    });
+    
+    document.getElementById('viewHistory')?.addEventListener('click', function() {
+        openModal('fullHistory');
+        loadFullHistory();
+    });
+    
+    document.getElementById('sendReminder')?.addEventListener('click', function() {
+        if (confirm('Envoyer un rappel de paiement à l\'étudiant ?')) {
+            fetch(`/paiements/${ {{ paiement.id }} }/envoyer-rappel/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Rappel envoyé avec succès.');
+                } else {
+                    alert('Erreur lors de l\'envoi du rappel.');
+                }
+            });
+        }
+    });
+    
+    {% if not paiement.statut %}
+    document.getElementById('quickCancel')?.addEventListener('click', function() {
+        if (confirm('Annuler ce paiement ? Cette action est irréversible.')) {
+            fetch(`/paiements/${ {{ paiement.id }} }/annuler/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Paiement annulé avec succès.');
+                    window.location.reload();
+                } else {
+                    alert('Erreur lors de l\'annulation.');
+                }
+            });
+        }
+    });
+    {% endif %}
+});
+
+function openModal(modalName) {
+    const modal = document.getElementById(modalName + 'Modal');
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+// Fonction pour ouvrir le modal QR code
+function openQRCodeModal() {
+    openModal('qrcode');
+}
+
+// Fonction pour imprimer le QR code
+function printQRCode() {
+    const qrCodeImage = document.querySelector('.qr-code-image-real') || document.querySelector('.qr-code-large');
+    if (qrCodeImage) {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>QR Code Réduction - {{ paiement.reference }}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; text-align: center; }
+                        .print-container { max-width: 400px; margin: 0 auto; }
+                        .print-header { margin-bottom: 30px; }
+                        .qr-code-print { margin: 20px 0; }
+                        .qr-code-print img { width: 250px; height: 250px; }
+                        .print-details { margin-top: 30px; text-align: left; }
+                        .detail-item { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+                        .detail-label { font-weight: bold; color: #666; }
+                        .detail-value { margin-left: 10px; }
+                        .reduction-value { color: #28a745; font-weight: bold; }
+                        .print-footer { margin-top: 50px; font-size: 12px; color: #999; }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-container">
+                        <div class="print-header">
+                            <h2>DbgMemo - PapelDeOro</h2>
+                            <h3>QR Code Réduction</h3>
+                            <p>Référence: {{ paiement.reference }}</p>
+                        </div>
+                        
+                        <div class="qr-code-print">
+                            <img src="${qrCodeImage.src}" alt="QR Code Réduction">
+                        </div>
+                        
+                        <div class="print-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Étudiant:</span>
+                                <span class="detail-value">{{ paiement.etudiant.first_name }} {{ paiement.etudiant.last_name }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Matricule:</span>
+                                <span class="detail-value">{{ paiement.etudiant.matricule|default:"N/A" }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Réduction:</span>
+                                <span class="detail-value reduction-value">{{ paiement.montant_reduction }} FCFA</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Date:</span>
+                                <span class="detail-value">{{ paiement.date_paiement|date:"d/m/Y à H:i" }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="print-footer">
+                            <p>Ce QR code est unique et valable pour une seule utilisation</p>
+                            <p>Imprimé le {% now "d/m/Y à H:i" %}</p>
+                        </div>
+                    </div>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+}
+
+// Fonction pour télécharger le QR code
+function downloadQRCode() {
+    const qrCodeImage = document.querySelector('.qr-code-image-real') || document.querySelector('.qr-code-large');
+    if (qrCodeImage && qrCodeImage.src) {
+        const link = document.createElement('a');
+        link.href = qrCodeImage.src;
+        link.download = `qr-code-reduction-{{ paiement.reference }}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } else {
+        alert('QR Code non disponible pour le téléchargement.');
+    }
+}
+
+function loadFullHistory() {
+    fetch(`/paiements/${ {{ paiement.id }} }/historique-complet/`)
+        .then(response => response.json())
+        .then(data => {
+            let historyHtml = '<div class="full-history-container">';
+            data.historique.forEach(item => {
+                historyHtml += `
+                    <div class="history-item-full">
+                        <div class="history-date-full">
+                            ${item.date_historique}
+                        </div>
+                        <div class="history-content-full">
+                            <div class="history-title-full">
+                                ${item.action}
+                            </div>
+                            <div class="history-details-full">
+                                <span class="history-status-full ${item.statut ? 'paid' : 'pending'}">
+                                    ${item.statut ? 'Payé' : 'En attente'}
+                                </span>
+                                <span class="history-amount-full">${item.montant_total} FCFA</span>
+                            </div>
+                            ${item.notes ? `<div class="history-notes">${item.notes}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            historyHtml += '</div>';
+            document.getElementById('fullHistoryList').innerHTML = historyHtml;
+        })
+        .catch(error => {
+            document.getElementById('fullHistoryList').innerHTML = 
+                '<div class="error-message">Erreur lors du chargement de l\'historique</div>';
+        });
+}
+
+function refreshHistory() {
+    fetch(`/paiements/${ {{ paiement.id }} }/historique/`)
+        .then(response => response.json())
+        .then(data => {
+            let historyHtml = '';
+            data.historique.forEach(item => {
+                historyHtml += `
+                    <div class="history-item">
+                        <div class="history-icon">
+                            <i class="fas ${item.statut ? 'fa-check-circle text-success' : 'fa-clock text-warning'}"></i>
+                        </div>
+                        <div class="history-content">
+                            <div class="history-title">
+                                Paiement ${item.statut ? 'validé' : 'en attente'}
+                            </div>
+                            <div class="history-details">
+                                <span class="history-date">${item.date}</span>
+                                <span class="history-amount">${item.montant} FCFA</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('historyList').innerHTML = historyHtml;
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+        });
+}
+
+function generateInvoicePDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Prévisualisation de la facture
+    const invoiceElement = document.getElementById('invoicePreview');
+    
+    html2canvas(invoiceElement).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 295; // A4 height in mm
+        const imgHeight = canvas.height * imgWidth / canvas.width;
+        
+        doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        doc.save(`facture-{{ paiement.reference }}.pdf`);
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

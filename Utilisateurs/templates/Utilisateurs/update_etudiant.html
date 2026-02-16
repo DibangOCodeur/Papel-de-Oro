@@ -1,0 +1,647 @@
+{% extends 'Utilisateurs/base.html' %}
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/Utilisateurs/inscription.css' %}">
+    <link rel="stylesheet" href="{% static 'css/Utilisateurs/update_etudiant.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<header class="dashboard-header">
+    <div class="header-left">
+        <h1>Modifier l'étudiant</h1>
+        <p>Mise à jour des informations</p>
+    </div>
+</header>
+<div class="main-content">
+    <!-- Formulaire de modification -->
+    <section class="register-section">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-user-edit"></i> Formulaire de modification</h3>
+                <span class="form-step">Étape 1/3</span>
+            </div>
+            
+            <div class="card-body">
+                <form id="studentForm" method="POST" action="{% url 'update_etudiant' etudiant.pk %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Onglets de navigation -->
+                    <div class="form-tabs">
+                        <button type="button" class="form-tab active" data-tab="personal">
+                            <i class="fas fa-user"></i>
+                            <span>Informations personnelles</span>
+                        </button>
+                        <button type="button" class="form-tab" data-tab="academic">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>Informations académiques</span>
+                        </button>
+                        <button type="button" class="form-tab" data-tab="payment">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Détails de paiement</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Messages d'erreur -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Veuillez corriger les erreurs ci-dessous
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Étape 1: Informations personnelles -->
+                    <div class="form-step-content active" id="personal-tab">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="last_name">
+                                    <i class="fas fa-user-tag"></i> Nom *
+                                </label>
+                                <div class="input-with-icon">
+                                    <input type="text"
+                                        id="last_name"
+                                        name="last_name"
+                                        class="form-control {% if form.last_name.errors %}input-error{% endif %}"
+                                        placeholder="Ex: ANOMAN"
+                                        required 
+                                        value="{{ form.last_name.value|default:etudiant.last_name }}">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.last_name.errors %}
+                                <div class="error-message">
+                                    {{ form.last_name.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-hint">Nom de famille en majuscules</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="first_name">
+                                    <i class="fas fa-user"></i> Prénom(s) *
+                                </label>
+                                <div class="input-with-icon">
+                                    <input type="text"
+                                        id="first_name"
+                                        name="first_name"
+                                        class="form-control {% if form.first_name.errors %}input-error{% endif %}"
+                                        placeholder="Ex: CLOVIS"
+                                        required 
+                                        value="{{ form.first_name.value|default:etudiant.first_name }}">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.first_name.errors %}
+                                <div class="error-message">
+                                    {{ form.first_name.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-hint">Prénom complet</div>
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label for="email">
+                                    <i class="fas fa-envelope"></i> Adresse email *
+                                </label>
+                                <div class="input-with-icon">
+                                    <input type="email"
+                                        id="email"
+                                        name="email"
+                                        class="form-control {% if form.email.errors %}input-error{% endif %}"
+                                        placeholder="clovis.anoman@papel.com"
+                                        required 
+                                        value="{{ form.email.value|default:etudiant.email }}">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.email.errors %}
+                                <div class="error-message">
+                                    {{ form.email.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-hint">Utilisé pour les notifications et le suivi</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="contact">
+                                    <i class="fas fa-phone"></i> Téléphone principal *
+                                </label>
+                                <div class="input-with-icon">
+                                    <input type="tel" 
+                                        id="contact" 
+                                        name="contact" 
+                                        class="form-control {% if form.contact.errors %}input-error{% endif %}"
+                                        placeholder="Ex: 05 04 13 86 87"
+                                        required
+                                        value="{{ form.contact.value|default:etudiant.contact }}">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.contact.errors %}
+                                <div class="error-message">
+                                    {{ form.contact.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Étape 2: Informations académiques -->
+                    <div class="form-step-content" id="academic-tab">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="matricule">
+                                    <i class="fas fa-id-card"></i> Matricule *
+                                </label>
+                                <div class="input-with-icon">
+                                    <input type="text" 
+                                        id="matricule" 
+                                        name="matricule" 
+                                        class="form-control {% if form.matricule.errors %}input-error{% endif %}"
+                                        required
+                                        value="{{ form.matricule.value|default:etudiant.matricule }}" 
+                                        placeholder="26GBATNIWQ0305">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.matricule.errors %}
+                                <div class="error-message">
+                                    {{ form.matricule.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="filiere">
+                                    <i class="fas fa-book"></i> Filière *
+                                </label>
+                                <div class="input-with-icon">
+                                    <select id="filiere" name="filiere" class="{% if form.filiere.errors %}input-error{% endif %}" required>
+                                        <option value="">Sélectionnez une filière</option>
+                                        {% for filiere in filieres %}
+                                            <option value="{{ filiere.id }}" 
+                                                {% if form.filiere.value|default:etudiant.filiere.id == filiere.id %}selected{% endif %}>
+                                                {{ filiere.nom }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.filiere.errors %}
+                                <div class="error-message">
+                                    {{ form.filiere.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="niveau">
+                                    <i class="fas fa-graduation-cap"></i> Niveau *
+                                </label>
+                                <div class="input-with-icon">
+                                    <select id="niveau" name="niveau" class="{% if form.niveau.errors %}input-error{% endif %}" required>
+                                        <option value="">Sélectionnez...</option>
+                                        {% for niveau in niveaux %}
+                                            <option value="{{ niveau.id }}"
+                                                {% if form.niveau.value|default:etudiant.niveau.id == niveau.id %}selected{% endif %}>
+                                                {{ niveau.niveau }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.niveau.errors %}
+                                <div class="error-message">
+                                    {{ form.niveau.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="annee">
+                                    <i class="fas fa-calendar"></i> Année académique *
+                                </label>
+                                <div class="input-with-icon">
+                                    <select id="annee" name="annee_academique" class="{% if form.annee_academique.errors %}input-error{% endif %}" required>
+                                        <option value="">Sélectionnez...</option>
+                                        {% for annee in annee_academiques %}
+                                            <option value="{{ annee.id }}"
+                                                {% if form.annee_academique.value|default:etudiant.annee_academique.id == annee.id %}selected{% endif %}>
+                                                {{ annee.annee_academique }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.annee_academique.errors %}
+                                <div class="error-message">
+                                    {{ form.annee_academique.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label for="theme_memoire">
+                                    <i class="fas fa-file-alt"></i> Thème du mémoire
+                                </label>
+                                <div class="input-with-icon">
+                                    <textarea id="theme_memoire" name="theme_memoire" rows="3" 
+                                              class="{% if form.theme_memoire.errors %}input-error{% endif %}"
+                                              placeholder="Ex: Intelligence artificielle et transformation digitale dans les entreprises sénégalaises...">{{ form.theme_memoire.value|default:etudiant.theme_memoire }}</textarea>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.theme_memoire.errors %}
+                                <div class="error-message">
+                                    {{ form.theme_memoire.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-hint">Décrivez brièvement le thème du mémoire (max 500 caractères)</div>
+                                <div class="char-counter">
+                                    <span id="themeCharCount">0</span>/500 caractères
+                                </div>
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label for="support_pdf">
+                                    <i class="fas fa-file-pdf"></i> Support PDF
+                                </label>
+                                <div class="input-with-icon file-input">
+                                    <input type="file" 
+                                           id="support_pdf" 
+                                           name="support_pdf" 
+                                           class="form-control-file {% if form.support_pdf.errors %}input-error{% endif %}"
+                                           accept=".pdf,.doc,.docx,.word">
+                                    <div class="file-preview" id="pdfPreview">
+                                        {% if etudiant.dossier.support_pdf %}
+                                        <span>{{ etudiant.dossier.support_pdf.name|slice:"20:" }}...</span>
+                                        {% else %}
+                                        <span>Aucun fichier sélectionné</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.support_pdf.errors %}
+                                <div class="error-message">
+                                    {{ form.support_pdf.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-hint">Taille maximale : 10MB. Format accepté : PDF, DOC, DOCX, WORD uniquement</div>
+                                {% if etudiant.dossier.support_pdf %}
+                                <div class="form-hint existing-file">
+                                    <i class="fas fa-file"></i> Fichier actuel : 
+                                    <a href="{{ etudiant.dossier.support_pdf.url }}" target="_blank">
+                                        {{ etudiant.dossier.support_pdf.name|slice:"20:" }}
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Étape 3: Détails de paiement -->
+                    <div class="form-step-content" id="payment-tab">
+                        <div class="form-grid">
+                            {% if etudiant.paiements.exists %}
+                            <div class="form-group full-width">
+                                <div class="existing-payment-info">
+                                    <h5><i class="fas fa-history"></i> Historique des paiements</h5>
+                                    <div class="payment-history">
+                                        {% for paiement in etudiant.paiements.all %}
+                                        <div class="payment-item">
+                                            <span class="payment-date">{{ paiement.date_paiement|date:"d/m/Y H:i" }}</span>
+                                            <span class="payment-amount">{{ paiement.montant_total }} FCFA</span>
+                                            <span class="payment-source">{{ paiement.get_source_display }}</span>
+                                            <span class="payment-status {% if paiement.statut %}completed{% else %}pending{% endif %}">
+                                                {% if paiement.statut %}Payé{% else %}En attente{% endif %}
+                                            </span>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="form-group">
+                                <label for="source">
+                                    <i class="fas fa-hand-holding-usd"></i> Source de paiement
+                                </label>
+                                <div class="input-with-icon">
+                                    <select id="source" name="source">
+                                        <option value="">Sélectionnez...</option>
+                                        <option value="ESPECE" {% if etudiant.dernier_paiement.source == "ESPECE" %}selected{% endif %}>Espèce</option>
+                                        <option value="MOBILE_MONEY" {% if etudiant.dernier_paiement.source == "MOBILE_MONEY" %}selected{% endif %}>Mobile Money</option>
+                                        <option value="WAVE_MONEY" {% if etudiant.dernier_paiement.source == "WAVE_MONEY" %}selected{% endif %}>Wave Money</option>
+                                    </select>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="frais_impression">
+                                    <i class="fas fa-print"></i> Frais d'impression
+                                </label>
+                                <div class="input-with-icon">
+                                    <div class="currency-input">
+                                        <input type="number" 
+                                            id="frais_impression" 
+                                            name="frais_impression" 
+                                            class="form-control"
+                                            min="0" 
+                                            step="500" 
+                                            value="{{ etudiant.dernier_paiement.frais_impression|default:'0' }}">
+                                        <span class="currency-symbol">FCFA</span>
+                                    </div>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                <div class="form-hint">Coût d'impression du mémoire</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="service_annexe">
+                                    <i class="fas fa-tools"></i> Service annexe
+                                </label>
+                                <div class="input-with-icon checkbox-wrapper">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" 
+                                               id="service_annexe" 
+                                               name="service_annexe" 
+                                               value="1"
+                                               {% if etudiant.dernier_paiement.frais_annexe > 0 %}checked{% endif %}>
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-text">Activer le service annexe</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" id="annexe_type_group" style="{% if etudiant.dernier_paiement.frais_annexe > 0 %}display: block;{% else %}display: none;{% endif %}">
+                                <label for="intitule_annexes">
+                                    <i class="fas fa-file-signature"></i> Type de service annexe
+                                </label>
+                                <div class="input-with-icon">
+                                    <select id="intitule_annexes" name="intitule_annexes">
+                                        <option value="">Sélectionnez un service</option>
+                                        <option value="PAGE_DE_GARDE" {% if etudiant.dernier_paiement.intitule_annexe == "PAGE_DE_GARDE" %}selected{% endif %}>Page de garde (1,000 FCFA)</option>
+                                        <option value="MISE_EN_FORME" {% if etudiant.dernier_paiement.intitule_annexe == "MISE_EN_FORME" %}selected{% endif %}>Mise en forme (4,000 FCFA)</option>
+                                        <option value="COMPLET" {% if etudiant.dernier_paiement.intitule_annexe == "COMPLET" %}selected{% endif %}>Complet (5,000 FCFA)</option>
+                                    </select>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                <div class="form-hint">Les frais seront calculés automatiquement</div>
+                            </div>
+                            
+                            <div class="form-group" id="frais_annexe_group" style="{% if etudiant.dernier_paiement.frais_annexe > 0 %}display: block;{% else %}display: none;{% endif %}">
+                                <label for="frais_annexe_display">
+                                    <i class="fas fa-money-bill"></i> Frais annexe
+                                </label>
+                                <div class="input-with-icon">
+                                    <div class="currency-input">
+                                        <input type="number" 
+                                               id="frais_annexe_display" 
+                                               name="frais_annexe_display" 
+                                               readonly
+                                               value="{{ etudiant.dernier_paiement.frais_annexe|default:'0' }}">
+                                        <span class="currency-symbol">FCFA</span>
+                                    </div>
+                                    <input type="hidden" id="frais_annexe" name="frais_annexe" value="{{ etudiant.dernier_paiement.frais_annexe|default:'0' }}">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="jeu_reduction">
+                                    <i class="fas fa-tags"></i> Jeu de réduction
+                                </label>
+                                <div class="input-with-icon checkbox-wrapper">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" 
+                                               id="jeu_reduction" 
+                                               name="jeu_reduction" 
+                                               value="1"
+                                               {% if etudiant.dernier_paiement.jeu_reduction %}checked{% endif %}>
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-text">Appliquer une réduction allant jusqu'a 30%</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="commission">
+                                    <i class="fas fa-percentage"></i> Commission
+                                </label>
+                                <div class="input-with-icon">
+                                    <div class="currency-input">
+                                        <input type="number" 
+                                            id="commission" 
+                                            name="commission"
+                                            class="form-control"
+                                            min="0" 
+                                            step="500" 
+                                            value="{{ etudiant.dernier_paiement.commission|default:'0' }}">
+                                        <span class="currency-symbol">FCFA</span>
+                                    </div>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                <div class="form-hint">Commission sous impression</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Récapitulatif des frais -->
+                        <div class="payment-summary">
+                            <h4><i class="fas fa-file-invoice-dollar"></i> Récapitulatif des frais</h4>
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <span class="label">Frais d'impression:</span>
+                                    <span class="value" id="summary_frais_impression">{{ etudiant.dernier_paiement.frais_impression|default:'0' }} FCFA</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Commission:</span>
+                                    <span class="value" id="summary_commission">{{ etudiant.dernier_paiement.commission|default:'0' }} FCFA</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Services annexes:</span>
+                                    <span class="value" id="summary_annexe">{{ etudiant.dernier_paiement.frais_annexe|default:'0' }} FCFA</span>
+                                </div>
+                                <div class="summary-item total">
+                                    <span class="label">Total à payer:</span>
+                                    <span class="value" id="summary_total">{{ etudiant.dernier_paiement.montant_total|default:'0' }} FCFA</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation entre les étapes -->
+                    <div class="form-navigation">
+                        <button type="button" class="btn-secondary" id="prevBtn">
+                            <i class="fas fa-arrow-left"></i> Précédent
+                        </button>
+                        
+                        <div class="step-indicator">
+                            <span class="step active" data-step="1"></span>
+                            <span class="step" data-step="2"></span>
+                            <span class="step" data-step="3"></span>
+                        </div>
+                        
+                        <button type="button" class="btn-primary" id="nextBtn">
+                            Suivant <i class="fas fa-arrow-right"></i>
+                        </button>
+                        
+                        <div class="submit-options" id="submitOptions" style="display: none;">
+                            <button type="submit" class="btn-success" name="update_etudiant">
+                                <i class="fas fa-save"></i> Mettre à jour
+                            </button>
+                            <a href="{% url 'liste_etudiant' %}" class="btn-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Panneau latéral avec résumé -->
+        <div class="preview-card">
+            <!-- Résumé rapide -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-file-invoice"></i> Résumé de l'étudiant</h3>
+                </div>
+                <div class="card-body">
+                    <div class="transaction-summary">
+                        <div class="summary-section">
+                            <h5><i class="fas fa-user"></i> Étudiant</h5>
+                            <div class="student-summary-info">
+                                <div class="student-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="student-details">
+                                    <strong>{{ etudiant.last_name }} {{ etudiant.first_name }}</strong>
+                                    <small>Matricule: {{ etudiant.matricule }}</small>
+                                    <small>Filière: {{ etudiant.filiere.nom }}</small>
+                                    <small>Inscrit le: {{ etudiant.date_joined|date:"d/m/Y" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-section">
+                            <h5><i class="fas fa-money-bill-wave"></i> Dernier paiement</h5>
+                            <div class="payment-details">
+                                {% if etudiant.dernier_paiement %}
+                                <div class="payment-item">
+                                    <span>Mode:</span>
+                                    <span>{{ etudiant.dernier_paiement.get_source_display }}</span>
+                                </div>
+                                <div class="payment-item">
+                                    <span>Date:</span>
+                                    <span>{{ etudiant.dernier_paiement.date_paiement|date:"d/m/Y" }}</span>
+                                </div>
+                                <div class="payment-item">
+                                    <span>Statut:</span>
+                                    <span class="status-badge {% if etudiant.dernier_paiement.statut %}completed{% else %}pending{% endif %}">
+                                        {% if etudiant.dernier_paiement.statut %}Payé{% else %}En attente{% endif %}
+                                    </span>
+                                </div>
+                                {% else %}
+                                <div class="payment-item">
+                                    <span>Aucun paiement enregistré</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="summary-section">
+                            <h5><i class="fas fa-calculator"></i> Détails financiers</h5>
+                            <div class="amount-details">
+                                {% if etudiant.dernier_paiement %}
+                                <div class="amount-item">
+                                    <span>Total payé:</span>
+                                    <span>{{ etudiant.dernier_paiement.montant_total }} FCFA</span>
+                                </div>
+                                <div class="amount-item">
+                                    <span>Commission:</span>
+                                    <span>{{ etudiant.dernier_paiement.commission }} FCFA</span>
+                                </div>
+                                <div class="amount-item">
+                                    <span>Services annexes:</span>
+                                    <span>{{ etudiant.dernier_paiement.frais_annexe }} FCFA</span>
+                                </div>
+                                {% else %}
+                                <div class="amount-item">
+                                    <span>Aucune transaction</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="summary-section">
+                            <h5><i class="fas fa-clipboard-check"></i> État du dossier</h5>
+                            <div class="dossier-status">
+                                <div class="status-item">
+                                    <span>Support PDF:</span>
+                                    <span class="status-badge {% if etudiant.dossier.support_pdf %}completed{% else %}pending{% endif %}">
+                                        {% if etudiant.dossier.support_pdf %}Fourni{% else %}Manquant{% endif %}
+                                    </span>
+                                </div>
+                                <div class="status-item">
+                                    <span>Statut:</span>
+                                    <span class="status-badge {% if etudiant.dossier.statut %}completed{% else %}pending{% endif %}">
+                                        {% if etudiant.dossier.statut %}Traité{% else %}En attente{% endif %}
+                                    </span>
+                                </div>
+                                <div class="status-item">
+                                    <span>Livraison:</span>
+                                    <span class="status-badge {% if etudiant.dossier.livraison %}completed{% else %}pending{% endif %}">
+                                        {% if etudiant.dossier.livraison %}Livré{% else %}Non livré{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions rapides -->
+            <div class="quick-actions">
+                <a href="#" class="btn-action" target="_blank">
+                    <i class="fas fa-print"></i> Imprimer le reçu
+                </a>
+                <a href="{% url 'liste_etudiant' %}" class="btn-action secondary">
+                    <i class="fas fa-list"></i> Liste des étudiants
+                </a>
+                <a href="#" class="btn-action danger" id="deleteBtn" data-id="{{ etudiant.pk }}">
+                    <i class="fas fa-trash"></i> Supprimer
+                </a>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Scripts -->
+<script src="{% static 'js/Utilisateurs/dashboard.js' %}"></script>
+<script src="{% static 'js/Utilisateurs/etudiant_form.js' %}"></script>
+<script src="{% static 'js/Utilisateurs/update_etudiant.js' %}"></script>
+<script>
+    // Script spécifique pour la modification
+    document.addEventListener('DOMContentLoaded', function() {
+        // Pré-remplir les compteurs
+        const themeTextarea = document.getElementById('theme_memoire');
+        if (themeTextarea) {
+            const charCount = document.getElementById('themeCharCount');
+            charCount.textContent = themeTextarea.value.length;
+            
+            themeTextarea.addEventListener('input', function() {
+                charCount.textContent = this.value.length;
+            });
+        }
+        
+        // Gestion de la suppression
+        const deleteBtn = document.getElementById('deleteBtn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const studentId = this.getAttribute('data-id');
+                if (confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ? Cette action est irréversible.')) {
+                    window.location.href = "{% url 'delete_etudiant' etudiant.pk %}";
+                }
+            });
+        }
+        
+        // Initialiser les valeurs pour le résumé
+        updatePaymentSummary();
+    });
+</script>
+{% endblock %}

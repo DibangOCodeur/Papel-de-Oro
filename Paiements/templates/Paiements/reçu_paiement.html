@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+{% load static %}
+{% load humanize %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Reçu de paiement officiel - DbgMemo Papel De Oro">
+    <title>Reçu de Paiement Officiel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Variables CSS pour personnalisation */
+        :root {
+            --primary: #1a4d80;
+            --primary-light: #2563a8;
+            --accent: #d4af37;
+            --accent-dark: #b8941f;
+            --text-primary: #1a1a1a;
+            --text-secondary: #4a4a4a;
+            --text-muted: #6b7280;
+            --border: #d1d5db;
+            --bg-subtle: #f9fafb;
+            --success: #059669;
+            --danger: #dc2626;
+        }
+        
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #e5e7eb;
+            padding: 15px;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+        
+        /* Container optimisé pour A4 */
+        .receipt-page {
+            width: 210mm;
+            min-height: 297mm;
+            max-height: 297mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            position: relative;
+            overflow: hidden;
+            padding: 15mm 12mm;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Filigrane en arrière-plan */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 80px;
+            font-weight: 700;
+            color: rgba(26, 77, 128, 0.03);
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1;
+            text-transform: uppercase;
+        }
+        
+        /* Filigrane logo */
+        .watermark-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            opacity: 0.02;
+            pointer-events: none;
+            z-index: 1;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="100" r="80" fill="none" stroke="%231a4d80" stroke-width="8"/><text x="100" y="115" font-family="serif" font-size="60" font-weight="bold" text-anchor="middle" fill="%231a4d80">DBG</text></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        /* Tout le contenu au-dessus du filigrane */
+        .content {
+            position: relative;
+            z-index: 2;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* En-tête avec logo */
+        .header {
+            display: grid;
+            grid-template-columns: 120px 1fr 120px;
+            gap: 15px;
+            align-items: center;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .logo-container {
+            width: 110px;
+            height: 110px;
+            border: 3px solid var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-subtle) 0%, white 100%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .logo-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Si vous avez un logo réel, utilisez ceci */
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 8px;
+        }
+        
+        .header-center {
+            text-align: center;
+        }
+        
+        .header-center h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        
+        .company-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-dark);
+            margin-bottom: 3px;
+        }
+        
+        .header-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        
+        .header-right {
+            text-align: right;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        
+        .receipt-number {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        
+        /* Grille d'informations compacte */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .info-card {
+            background: var(--bg-subtle);
+            border-left: 3px solid var(--accent);
+            padding: 10px 12px;
+            border-radius: 4px;
+        }
+        
+        .info-card h2 {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        
+        .info-row .label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            min-width: 110px;
+        }
+        
+        .info-row .value {
+            color: var(--text-primary);
+            font-weight: 400;
+            flex: 1;
+        }
+        
+        /* Badge de statut */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.paid {
+            background: #d1fae5;
+            color: var(--success);
+            border: 1px solid #a7f3d0;
+        }
+        
+        .status-badge.unpaid {
+            background: #fee2e2;
+            color: var(--danger);
+            border: 1px solid #fecaca;
+        }
+        
+        /* Tableau compact */
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+        
+        .details-table thead {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+        
+        .details-table th {
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        .details-table td {
+            padding: 7px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .details-table tbody tr:hover {
+            background: var(--bg-subtle);
+        }
+        
+        .details-table .total-row {
+            background: #fef3c7;
+            font-weight: 700;
+            border-top: 2px solid var(--accent);
+        }
+        
+        .details-table .paid-row {
+            background: #d1fae5;
+            font-weight: 700;
+            color: var(--success);
+        }
+        
+        .amount-highlight {
+            font-weight: 700;
+            font-size: 13px;
+        }
+        
+        /* ===== NOUVELLE SECTION MODIFIÉE ===== */
+        /* Section Bas - QR Code au-dessus des signatures */
+        .bottom-section {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        
+        /* QR Code avec texte au-dessus */
+        .qr-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .qr-text {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(26, 77, 128, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .qr-text i {
+            font-size: 16px;
+        }
+        
+        .qr-section {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 2px dashed var(--primary);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            width: 220px;
+            margin: 0 auto;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        
+        .qr-section h3 {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .qr-code {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 10px;
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .verification-code {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            background: white;
+            padding: 5px 15px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-bottom: 6px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .qr-hint {
+            font-size: 10px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            font-style: italic;
+        }
+        
+        /* Signatures descendues plus bas */
+        .signatures-wrapper {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px dashed var(--border);
+        }
+        
+        .signatures-title {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .signatures-compact {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .signature-box {
+            text-align: center;
+        }
+        
+        .signature-box .title {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .signature-line {
+            border-top: 2px solid var(--text-primary);
+            margin: 40px 10px 8px 10px;
+        }
+        
+        .signature-box .name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+        
+        .signature-box .subtitle {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: 3px;
+        }
+        
+        /* Pied de page ultra-compact */
+        .footer {
+            border-top: 2px solid var(--border);
+            padding-top: 8px;
+            margin-top: auto;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .footer-info {
+            font-size: 9px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        
+        .footer-company {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        
+        .footer-seal {
+            width: 80px;
+            height: 80px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 10px;
+            text-align: center;
+            padding: 10px;
+            line-height: 1.2;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+        
+        /* Boutons d'impression */
+        .print-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        
+        .btn-eco {
+            background: #059669;
+        }
+        
+        .btn-eco:hover {
+            background: #047857;
+        }
+        
+        .btn-print {
+            background: var(--primary);
+        }
+        
+        .btn-print:hover {
+            background: var(--primary-light);
+        }
+        
+        .btn-back {
+            background: var(--text-muted);
+        }
+        
+        .btn-back:hover {
+            background: #4b5563;
+        }
+        
+        /* Mode impression */
+        @media print {
+            @page {
+                margin: 0;
+            }
+            
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .receipt-page {
+                box-shadow: none;
+                width: 100%;
+                height: 100vh;
+                max-height: none;
+                margin: 0;
+                page-break-after: avoid;
+                page-break-inside: avoid;
+            }
+            
+            .print-controls {
+                display: none !important;
+            }
+            
+            /* Mode économie d'encre */
+            body.eco-print .watermark,
+            body.eco-print .watermark-logo {
+                display: none;
+            }
+            
+            body.eco-print .details-table thead {
+                background: white !important;
+                color: black !important;
+                border: 2px solid black;
+            }
+            
+            body.eco-print .logo-container,
+            body.eco-print .info-card,
+            body.eco-print .qr-section {
+                background: white !important;
+                border-color: black !important;
+            }
+            
+            body.eco-print .footer-seal {
+                background: white !important;
+                color: black !important;
+                border-color: black !important;
+            }
+        }
+        
+        /* Responsive pour visualisation */
+        @media screen and (max-width: 900px) {
+            body {
+                padding: 0;
+            }
+            
+            .receipt-page {
+                width: 100%;
+                min-height: auto;
+                box-shadow: none;
+            }
+            
+            .header {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .logo-container {
+                margin: 0 auto;
+            }
+            
+            .header-right {
+                text-align: center;
+                margin-top: 10px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .signatures-compact {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+        
+        /* Animation d'apparition */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .content {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-page">
+        <!-- Filigrane texte -->
+        <div class="watermark">DbgMemo • Papel De Oro</div>
+        
+        <!-- Filigrane logo -->
+        <div class="watermark-logo"></div>
+        
+        <div class="content">
+            <!-- En-tête avec logo -->
+            <header class="header">
+                <div class="logo-container">
+                    <img src="{% static 'images/logo.png' %}" alt="Logo DbgMemo">
+                </div>
+                
+                <div class="header-center">
+                    <h1>Reçu de Paiement</h1>
+                    <div class="company-name">DbgMemo - Papel De Oro</div>
+                    <div class="header-meta">Document Officiel</div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="receipt-number">N° {{ paiement.reference }}</div>
+                    <div>Date : <span id="current-date">{% now "d/m/Y" %}</span></div>
+                    <div>Heure : <span id="current-time">{% now "H:i" %}</span></div>
+                </div>
+            </header>
+            
+            <!-- Informations compactes -->
+            <section class="info-grid">
+                <div class="info-card">
+                    <h2>Informations Étudiant</h2>
+                    <div class="info-row">
+                        <span class="label">Nom complet :</span>
+                        <span class="value">{{ etudiant.last_name }} {{ etudiant.first_name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Matricule :</span>
+                        <span class="value">{{ etudiant.matricule }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Filière :</span>
+                        <span class="value">{{ etudiant.filiere.nom }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Niveau :</span>
+                        <span class="value">{{ etudiant.niveau.niveau }}</span>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h2>Détails du Paiement</h2>
+                    <div class="info-row">
+                        <span class="label">Référence :</span>
+                        <span class="value">{{ paiement.reference }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Date paiement :</span>
+                        <span class="value">{{ paiement.date_paiement|date:"d/m/Y à H:i" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Source :</span>
+                        <span class="value">{{ paiement.get_source_display }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Statut :</span>
+                        <span class="value">
+                            <span class="status-badge {% if paiement.statut %}paid{% else %}unpaid{% endif %}">
+                                {% if paiement.statut %}✓ Payé{% else %}✗ Impayé{% endif %}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tableau des montants -->
+            <section>
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th style="width: 80px;"></th>
+                            <th style="width: 120px;"></th>
+                            <th style="width: 120px;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Frais d'impression mémoire</td>
+                            <td></td>
+                            <td></td>
+                            <td>{{ paiement.frais_impression }} FCFA</td>
+                        </tr>
+                        <tr>
+                            <td>Frais service annexe</td>
+                            <td></td>
+                            <td></td>
+                            <td>{{ paiement.frais_annexe}} FCFA</td>
+                        </tr>
+                        {% if paiement.jeu_reduction %}
+                        <tr>
+                            <td>Frais Tombola</td>
+                            <td></td>
+                            <td></td>
+                            <td>500 FCFA</td>
+                        </tr>
+                        <tr>
+                            <td>Montant économisé</td>
+                            <td></td>
+                            <td></td>
+                            <td>{{ paiement.montant_reduction}} FCFA</td>
+                        </tr>
+                        {% endif %}
+                        <tr class="total-row">
+                            <td colspan="3"><strong>MONTANT À PAYER</strong></td>
+                            {% if paiement.jeu_reduction %}
+                            <td class="amount-highlight">{{ paiement.frais_annexe|add:paiement.frais_impression|add:500 |intcomma }} FCFA</td>
+                            {% else %}
+                            <td class="amount-highlight">{{ paiement.frais_annexe|add:paiement.frais_impression |intcomma }} FCFA</td>
+                            {% endif %}
+                        </tr>
+                        <tr class="paid-row">
+                            <td colspan="3"><strong>MONTANT PAYÉ</strong></td>
+                            <td class="amount-highlight">{{ paiement.montant_total }} FCFA</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ===== NOUVELLE SECTION MODIFIÉE ===== -->
+            <!-- QR Code au-dessus des signatures -->
+            <section class="bottom-section">
+                
+                <!-- QR Code avec texte au-dessus -->
+                {% if paiement.jeu_reduction %}
+                <div class="qr-wrapper">                
+                    <div class="qr-section">
+                        <h3>Vérification Tombola</h3>
+                        <div class="qr-code">
+                            <img src="data:image/png;base64,{{ qr_code_base64 }}" 
+                                 alt="QR Code {{ paiement.reference }}">
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Signatures descendues plus bas -->
+                <div class="signatures-wrapper">
+                    <div class="signatures-compact">
+                        <div class="signature-box">
+                            <div class="title">Signature du Responsable</div>
+                            <div class="signature-line"></div>
+                            <div class="name">DbgMemo - PapelDeOro</div>
+                            <div class="subtitle">Cachet de l'entreprise</div>
+                        </div>
+                        
+                        <div class="signature-box">
+                            <div class="title">Signature de l'Étudiant</div>
+                            <div class="signature-line"></div>
+                            <div class="name">{{ etudiant.last_name }} {{ etudiant.first_name }}</div>
+                            <div class="subtitle">Pour réception et accord</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Pied de page compact -->
+            <footer class="footer">
+                <div class="footer-content">
+                    <div class="footer-info">
+                        <div class="footer-company">© 2026 DbgMind's - PapelDeOro. Tous droits réservés.</div>
+                        <div><strong>Contact :</strong> +225 01 40 79 93 73 / +225 01 40 79 93 75 | <strong>Email :</strong> dbg.minds@gmail.com | <strong>Web :</strong> dbgminds.com</div>
+                        <div style="margin-top: 3px;">Ce document constitue un reçu officiel. Conservez-le pour vos archives. En cas de litige, contactez-nous sous 30 jours.</div>
+                        <div style="margin-top: 3px; font-family: 'Courier New', monospace;"><strong>Réf:</strong> {{ paiement.reference }} | <strong>Généré le:</strong> {% now "d/m/Y à H:i" %}</div>
+                    </div>
+                    
+                    <div class="footer-seal">
+                        <div>REÇU<br>OFFICIEL<br>2026</div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- Contrôles d'impression -->
+    <div class="print-controls">
+        <button class="btn btn-eco" onclick="toggleEcoPrint()" id="eco-btn">
+            <i class="fas fa-leaf"></i> Mode éco
+        </button>
+        <button class="btn btn-print" onclick="printReceipt()">
+            <i class="fas fa-print"></i> Imprimer
+        </button>
+        <a href="{% url 'liste_etudiant' %}" class="btn btn-back" style="text-decoration: none;">
+            <i class="fas fa-arrow-left"></i> Retour
+        </a>
+    </div>
+    
+    <!-- Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        let ecoPrintMode = false;
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setupAccessibility();
+        });
+        
+        // Mise à jour date/heure
+        function updateDateTime() {
+            const now = new Date();
+            const dateEl = document.getElementById('current-date');
+            const timeEl = document.getElementById('current-time');
+            
+            if (dateEl) {
+                dateEl.textContent = now.toLocaleDateString('fr-FR');
+            }
+            if (timeEl) {
+                timeEl.textContent = now.toLocaleTimeString('fr-FR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            }
+        }
+        
+        // Accessibilité
+        function setupAccessibility() {
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+        }
+        
+        // Mode économie d'encre
+        function toggleEcoPrint() {
+            ecoPrintMode = !ecoPrintMode;
+            const ecoBtn = document.getElementById('eco-btn');
+            
+            if (ecoPrintMode) {
+                document.body.classList.add('eco-print');
+                ecoBtn.innerHTML = '<i class="fas fa-check-circle"></i> Mode éco ✓';
+                showNotification('Mode économie d\'encre activé');
+            } else {
+                document.body.classList.remove('eco-print');
+                ecoBtn.innerHTML = '<i class="fas fa-leaf"></i> Mode éco';
+                showNotification('Mode normal rétabli');
+            }
+        }
+        
+        // Impression
+        function printReceipt() {
+            window.print();
+        }
+        
+        // Notification simple
+        function showNotification(message) {
+            const notif = document.createElement('div');
+            notif.textContent = message;
+            notif.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--primary);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 10000;
+                font-size: 13px;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(notif);
+            
+            setTimeout(() => {
+                notif.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notif.remove(), 300);
+            }, 2000);
+        }
+        
+        // Animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(400px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(400px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Gestion impression
+        window.addEventListener('beforeprint', () => {
+            console.log('Impression en cours...');
+        });
+        
+        window.addEventListener('afterprint', () => {
+            showNotification('Impression terminée');
+        });
+    </script>
+</body>
+</html>

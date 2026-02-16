@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+{% load custom_filters %}
+{% load static %}
+
+
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Service Impression Mémoires</title>
+    <link rel="stylesheet" href="{% static 'css/Utilisateurs/connexion.css' %}">
+    <link rel="stylesheet" href="{% static 'css/Utilisateurs/dashboard.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="dark-mode">
+    <!-- Animation de fond -->
+    <div class="bg-animation">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
+        <div class="circle circle-4"></div>
+        <div class="circle circle-5"></div>
+        <div class="circle circle-6"></div>
+    </div>
+    
+    <div class="dashboard-container">
+        <!-- Bouton mode clair/sombre -->
+        <button class="theme-toggle" id="themeToggle">
+            <i class="fas fa-moon"></i>
+            <i class="fas fa-sun"></i>
+            <span class="theme-ball"></span>
+        </button>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="{% static 'images/logo.png' %}" alt="Logo DbgMemo" width="100" height="100" style="border-radius: 50%;">
+                    <h2>Dbg<span>Memo</span></h2>
+                </div>
+                <div class="user-info">
+                    <div class="user-details">
+                        <div class="user-title-wrapper">
+                        <h3>{{ user.get_full_name|default:'Dibango' }}</h3>
+                    </div>
+
+                    <!-- Ajouter ceci juste après le user-status -->
+                    {% if user.is_superuser or user.is_staff %}
+                    <div class="user-title-wrapper" style="margin-top: 8px;">
+                        <a href="{% url 'admin:index' %}" class="user-status active" target="_blank" style="text-decoration: none;">
+                            <i class="fas fa-cogs"></i>
+                            <span>Admin Django</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active">
+                        <a href="#">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <i class="fas fa-users"></i>
+                            <span>Étudiants</span>
+                        </a>
+                        <ul>
+                            <li><a href="{% url 'ajouter_etudiant' %}">Ajouter un étudiant</a></li>
+                            <li><a href="{% url 'liste_etudiant' %}">Liste des étudiants</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="{% url 'liste_memoire' %}">
+                            <i class="fas fa-file-upload"></i>
+                            <span>Mémoires</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <i class="fas fa-qrcode"></i>
+                            <span>Tombola</span>
+                        </a>
+                        <ul>
+                            <li><a href="#">Ajouter un Participant</a></li>
+                            <li><a href="#">Liste des Participants</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Paiements</span>
+                        </a>
+                        <ul>
+                            <li><a href="#">Ajouter un paiement</a></li>
+                            <li><a href="{% url 'Liste_paiements' %}">Liste des paiements</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Statistiques</span>
+                        </a>
+                        <ul>
+                            <li><a href="{% url 'statistique' %}">Statistiques globales</a></li>
+                            <li><a href="#">Statistiques par étudiant</a></li>
+                            <li><a href="#">Statistiques par mémoire</a></li>
+                            <li><a href="#">Statistiques par tombola</a></li>
+                            <li><a href="#">Statistiques par paiement</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <i class="fas fa-cog"></i>
+                            <span>Paramètres</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="quick-stats">
+                    <h4><i class="fas fa-chart-line"></i> Aperçu rapide</h4>
+                    <div class="quick-stat">
+                        <span>Revenus aujourd'hui</span>
+                        <span class="value">245,500 FCFA</span>
+                    </div>
+                    <div class="quick-stat">
+                        <span>Nouveaux étudiants</span>
+                        <span class="value">12</span>
+                    </div>
+                </div>
+                
+                <button class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <h1>Tableau de bord Admin</h1>
+                    <p>Gestion du service d'impression des mémoires</p>
+                </div>
+                
+                <div class="header-right">
+                    <div class="date-display">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="currentDate">26 Janvier 2024</span>
+                    </div>
+                    
+                    <div class="header-search">
+                        <input type="text" placeholder="Rechercher...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Dashboard Stats -->
+            <section class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Étudiants inscrits</h3>
+                        <p class="stat-number">{{ total_etudiants }}</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Mémoires Enregistrés</h3>
+                        <p class="stat-number">{{ nb_memoire }}</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Montant global</h3>
+                        <p class="stat-number">{{ montant_total_formate }} FCFA</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Montant perdu</h3>
+                        <p class="stat-number">{{ montant_perdu_formate }} FCFA</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Charts and Recent Activity -->
+            <section class="dashboard-content">
+                <div class="content-left">
+                    <!-- Revenue Chart -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-line"></i> Revenus mensuels</h3>
+                            <select class="chart-period">
+                                <option>Ce mois</option>
+                                <option>6 derniers mois</option>
+                                <option>Cette année</option>
+                            </select>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <div class="chart-placeholder">
+                                    <div class="chart-bar" style="height: 80%;" data-value="450,000"></div>
+                                    <div class="chart-bar" style="height: 65%;" data-value="365,000"></div>
+                                    <div class="chart-bar" style="height: 90%;" data-value="512,000"></div>
+                                    <div class="chart-bar" style="height: 75%;" data-value="425,000"></div>
+                                    <div class="chart-bar" style="height: 95%;" data-value="540,000"></div>
+                                    <div class="chart-bar" style="height: 70%;" data-value="398,000"></div>
+                                </div>
+                                <div class="chart-labels">
+                                    <span>Jan</span>
+                                    <span>Fév</span>
+                                    <span>Mar</span>
+                                    <span>Avr</span>
+                                    <span>Mai</span>
+                                    <span>Juin</span>
+                                </div>
+                            </div>
+                            <div class="chart-summary">
+                                <div class="summary-item">
+                                    <span class="label">Mise en forme:</span>
+                                    <span class="value">{{ montant_annexe_formate }} FCFA</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Commission impression:</span>
+                                    <span class="value">{{ commission_formate }} FCFA</span>
+                                </div>
+                                <div class="summary-item total">
+                                    <span class="label">Total:</span>
+                                    <span class="value">{{ benefice_formate }} FCFA</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Orders -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-history"></i> Derniers étudiants inscrits</h3>
+                            <a href="{% url 'liste_etudiant' %}" class="view-all">Voir tout</a>
+                        </div>
+                        <div class="card-body">
+                            <div class="orders-table">
+                                <div class="table-header">
+                                    <div class="col-student">Étudiant</div>
+                                    <div class="col-type">Filière</div>
+                                    <div class="col-status">Statut</div>
+                                    <div class="col-amount">Montant payé</div>
+                                    <div class="col-actions">Actions</div>
+                                </div>
+                                
+                                {% for etudiant in etudiants %}
+                                <div class="table-row">
+                                    <div class="col-student">
+                                        <div class="student-avatar">
+                                            {{ etudiant.first_name|first|upper }}{{ etudiant.last_name|first|upper }}
+                                        </div>
+                                        <div class="student-info">
+                                            <strong>{{ etudiant.first_name }} {{ etudiant.last_name }}</strong>
+                                            <small>{{ etudiant.matricule }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-type">
+                                        {{ etudiant.filiere.nom|default:"Non défini" }}
+                                    </div>
+                                    <div class="col-status">
+                                        {# Vérifier si l'étudiant a un dossier #}
+                                        {% with dossier=etudiant.dossier_set.first %}
+                                            {% if dossier %}
+                                                {% if dossier.statut %}
+                                                    <span class="status-badge delivered">Traité</span>
+                                                {% else %}
+                                                    <span class="status-badge processing">En traitement</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="status-badge pending">Sans dossier</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                    <div class="col-amount">
+                                        {# Calculer le total des paiements #}
+                                        {% with total_paiements=etudiant.paiements.all %}
+                                            {% if total_paiements %}
+                                                {% with montant=total_paiements.0.montant_total %}
+                                                    {# Utiliser un filtre pour formater le nombre #}
+                                                    {% load humanize %}
+                                                    {{ montant|floatformat:0|intcomma|default:"0" }} FCFA
+                                                {% endwith %}
+                                            {% else %}
+                                                0 FCFA
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                    <div class="col-actions">
+                                        <button class="action-btn" title="Voir détails" onclick="window.location.href='{% url 'detail_etudiant' etudiant.id %}'">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="action-btn" title="Modifier" onclick="window.location.href='#'">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="table-row">
+                                    <div class="col-empty" colspan="5">
+                                        Aucun étudiant inscrit pour le moment
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="content-right">
+                    <!-- Tombola Management -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-ticket-alt"></i> Gestion Tombola</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="tombola-info">
+                                <div class="tombola-stats-card">
+                                    <div class="tombola-stat">
+                                        <span class="number"> {{ nb_participants }} </span>
+                                        <span class="label">Participants</span>
+                                    </div>
+                                    <div class="tombola-stat">
+                                        <span class="number"> {{ total_tombola_formate }} FCFA </span>
+                                        <span class="label"> collectés</span>
+                                    </div>
+                                    <div class="tombola-stat">
+                                        <span class="number">{{ nb_gagnant|floatformat:0|intcomma|default:"0" }}</span>
+                                        <span class="label">Gagnants</span>
+                                    </div>
+                                </div>
+                                <div class="orders-table">
+                                    <div class="table-header">
+                                        <div class="col-student">Étudiant</div>
+                                        <div class="col-type">Type</div>
+                                        <div class="col-status">Statut</div>
+                                        <div class="col-amount">Montant</div>
+                                        <div class="col-actions">Actions</div>
+                                    </div>
+
+                                    
+                                    <div class="table-row">
+                                        <div class="col-student">
+                                            <div class="student-avatar">AK</div>
+                                            <div class="student-info">
+                                                <strong>Amara Kouassi</strong>
+                                                <small>Licence 3</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-type">Mémoire + Impression</div>
+                                        <div class="col-status">
+                                            <span class="status-badge processing">En traitement</span>
+                                        </div>
+                                        <div class="col-amount">45,500 FCFA</div>
+                                        <div class="col-actions">
+                                            <button class="action-btn" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="action-btn" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="table-row">
+                                        <div class="col-student">
+                                            <div class="student-avatar">FD</div>
+                                            <div class="student-info">
+                                                <strong>Fatou Diop</strong>
+                                                <small>Master 2</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-type">Impression seule</div>
+                                        <div class="col-status">
+                                            <span class="status-badge printed">Imprimé</span>
+                                        </div>
+                                        <div class="col-amount">36,000 FCFA</div>
+                                        <div class="col-actions">
+                                            <button class="action-btn" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="action-btn" title="Télécharger">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="table-row">
+                                        <div class="col-student">
+                                            <div class="student-avatar">KT</div>
+                                            <div class="student-info">
+                                                <strong>Koffi Traoré</strong>
+                                                <small>Licence 3</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-type">Mise en forme</div>
+                                        <div class="col-status">
+                                            <span class="status-badge delivered">Livré</span>
+                                        </div>
+                                        <div class="col-amount">3,000 FCFA</div>
+                                        <div class="col-actions">
+                                            <button class="action-btn" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="action-btn" title="Facture">
+                                                <i class="fas fa-receipt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="table-row">
+                                        <div class="col-student">
+                                            <div class="student-avatar">MA</div>
+                                            <div class="student-info">
+                                                <strong>Mariam Abdou</strong>
+                                                <small>Master 2</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-type">Mémoire + Impression</div>
+                                        <div class="col-status">
+                                            <span class="status-badge pending">En attente</span>
+                                        </div>
+                                        <div class="col-amount">48,500 FCFA</div>
+                                        <div class="col-actions">
+                                            <button class="action-btn" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="action-btn" title="Accepter">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-bolt"></i> Actions rapides</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="quick-actions">
+                                <button class="quick-action-btn">
+                                    <a href="{% url 'ajouter_etudiant' %}" style="text-decoration: none;">
+                                    <i class="fas fa-user-plus"></i> <br>
+                                    <span>Ajouter étudiant</span>
+                                    </a>
+                                </button>
+                                <button class="quick-action-btn">
+                                    <i class="fas fa-file-import"></i>
+                                    <span>Importer mémoires</span>
+                                </button>
+                                <button class="quick-action-btn">
+                                    <i class="fas fa-qrcode"></i>
+                                    <span>Générer QR codes</span>
+                                </button>
+                                <button class="quick-action-btn">
+                                    <i class="fas fa-chart-pie"></i>
+                                    <span>Rapport financier</span>
+                                </button>
+                                <button class="quick-action-btn">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>Envoyer notifications</span>
+                                </button>
+                                <button class="quick-action-btn">
+                                    <i class="fas fa-print"></i>
+                                    <span>Imprimer reçus</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Footer -->
+            <footer class="dashboard-footer">
+                <p>Service Impression Mémoires - DbgMemo Admin Panel • Version 2.0 •</p>
+                <p>© 2026 DbgMind's - PapelDeOro. Tous droits réservés.</p>
+            </footer>
+        </main>
+    </div>
+    <script src="{% static 'js/Utilisateurs/dashboard.js' %}"></script>
+</body>
+</html>

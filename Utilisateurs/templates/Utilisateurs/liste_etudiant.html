@@ -1,0 +1,479 @@
+{% extends 'Utilisateurs/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Utilisateurs/liste_etudiants.css' %}">
+{% endblock %}
+
+{% block content %} 
+<main class="main-content">
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <h1>Liste des Étudiants</h1>
+            <p>Gestion et visualisation de tous les étudiants inscrits</p>
+        </div>
+        
+        <div class="header-right">
+            <a href="{% url 'ajouter_etudiant' %}" class="btn-primary">
+                <i class="fas fa-user-plus"></i> Nouvel étudiant
+            </a>
+        </div>
+    </header>
+    
+    <!-- Statistiques rapides -->
+    <section class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Étudiants</h3>
+                <p class="stat-number">{{ total_etudiants }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Revenus totaux</h3>
+                <p class="stat-number">{{ montant_total|floatformat:0 }} FCFA</p>
+                <p class="stat-desc">Commission: {{ montant_total|floatformat:0 }} FCFA</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-file-invoice"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Factures payées</h3>
+                <p class="stat-number">142</p>
+                <p class="stat-desc">14 en attente</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Mémoires imprimés</h3>
+                <p class="stat-number">89</p>
+                <p class="stat-desc">67 en attente</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Contrôles et filtres -->
+    <section class="controls-section">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" id="filterForm">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label><i class="fas fa-search"></i> Recherche</label>
+                            <div class="search-box">
+                                <input type="text" name="search" id="searchInput" 
+                                       placeholder="Rechercher un étudiant..."
+                                       value="{{ request.GET.search }}">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fas fa-filter"></i> Filière</label>
+                            <select name="filiere" id="filterFiliere" class="filter-select">
+                                <option value="">Toutes les filières</option>
+                                {% for filiere in filieres %}
+                                <option value="{{ filiere.id }}" 
+                                        {% if request.GET.filiere == filiere.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ filiere.nom }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fas fa-graduation-cap"></i> Niveau</label>
+                            <select name="niveau" id="filterNiveau" class="filter-select">
+                                <option value="">Tous les niveaux</option>
+                                {% for niveau in niveaux %}
+                                <option value="{{ niveau.niveau }}"
+                                        {% if request.GET.niveau == niveau.niveau|stringformat:"s" %}selected{% endif %}>
+                                    {{ niveau }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fas fa-calendar"></i> Année</label>
+                            <select name="annee_academique" id="filterAnnee" class="filter-select">
+                                <option value="">Toutes les années</option>
+                                {% for annee in annees_academiques %}
+                                <option value="{{ annee.id }}"
+                                        {% if request.GET.annee_academique == annee.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ annee.annee_academique }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <a href="{% url 'liste_etudiant' %}" class="btn-secondary" id="resetFilters">
+                            <i class="fas fa-redo"></i> Réinitialiser
+                        </a>
+                        
+                        <div class="export-buttons">
+                            <button type="button" class="btn-export" id="exportPDF">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                            <button type="button" class="btn-export btn-export-excel" id="exportExcel">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </button>
+                            <button type="button" class="btn-export" id="exportPrint">
+                                <i class="fas fa-print"></i> Imprimer
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Tableau des étudiants -->
+    <section class="students-table-section">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-list"></i> Liste des étudiants</h3>
+                <span class="total-count">{{ total_etudiants }} étudiants</span>
+            </div>
+            
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="studentsTable" class="students-table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAll">
+                                </th>
+                                <th>Matricule</th>
+                                <th>Nom & Prénom(s)</th>
+                                <th>Filière</th>
+                                <th>Sigle</th>
+                                <th>Niveau</th>
+                                <th>Téléphone</th>
+                                <th>Annee Academique</th>
+                                <th>Date inscription</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            {% for etudiant in etudiants %}
+                            <tr data-id="{{ etudiant.id }}">
+                                <td>
+                                    <input type="checkbox" class="student-checkbox" 
+                                           data-id="{{ etudiant.id }}">
+                                </td>
+                                <td>
+                                    <span class="matricule-badge">{{ etudiant.matricule|default:"N/A" }}</span>
+                                </td>
+                                <td>
+                                    <div class="student-name-cell">
+                                        <div class="student-avatar-small">
+                                            {{ etudiant.first_name|first|upper }}{{ etudiant.last_name|first|upper }}
+                                        </div>
+                                        <div class="student-info">
+                                            <span class="student-name">{{ etudiant.last_name }} {{ etudiant.first_name }}</span>
+                                            <span class="student-email">{{ etudiant.email }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ etudiant.filiere.nom }}</td>
+                                <td>{{ etudiant.filiere.abreviation }}</td>
+                                <td>{{ etudiant.niveau.niveau }}</td>
+                                <td>{{ etudiant.contact|default:"N/A" }}</td>
+                                <td>{{ etudiant.annee_academique.annee_academique }}</td>
+                                <td>{{ etudiant.date_inscription|date:"d/m/Y" }}</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a class="action-icon-btn view"
+                                            href="{% url 'detail_etudiant' etudiant.id %}"
+                                            title="Voir détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'update_etudiant' etudiant.id %}" 
+                                           class="action-icon-btn edit" 
+                                           title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'delete_etudiant' etudiant.id %}" 
+                                           class="action-icon-btn delete" 
+                                           title="Supprimer">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center">
+                                    <div class="empty-state">
+                                        <i class="fas fa-users fa-3x"></i>
+                                        <h4>Aucun étudiant trouvé</h4>
+                                        <p>Aucun étudiant n'est inscrit pour le moment.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination Django -->
+                {% if is_paginated %}
+                <div class="table-footer">
+                    <div class="pagination-info">
+                        Affichage de <span id="startRow">{{ page_obj.start_index }}</span> 
+                        à <span id="endRow">{{ page_obj.end_index }}</span> 
+                        sur <span id="totalRows">{{ paginator.count }}</span> étudiants
+                    </div>
+                    
+                    <div class="pagination-controls">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="pagination-btn" id="prevPage">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        {% else %}
+                        <span class="pagination-btn disabled">
+                            <i class="fas fa-chevron-left"></i>
+                        </span>
+                        {% endif %}
+                        
+                        <span class="page-numbers">
+                            Page <span id="currentPage">{{ page_obj.number }}</span> 
+                            sur <span id="totalPages">{{ paginator.num_pages }}</span>
+                        </span>
+                        
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="pagination-btn" id="nextPage">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% else %}
+                        <span class="pagination-btn disabled">
+                            <i class="fas fa-chevron-right"></i>
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="rows-per-page">
+                        <label>Afficher :</label>
+                        <select id="rowsPerPage" onchange="changeRowsPerPage(this.value)">
+                            <option value="10" {% if paginate_by == 10 %}selected{% endif %}>10</option>
+                            <option value="25" {% if paginate_by == 25 %}selected{% endif %}>25</option>
+                            <option value="50" {% if paginate_by == 50 %}selected{% endif %}>50</option>
+                            <option value="100" {% if paginate_by == 100 %}selected{% endif %}>100</option>
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+    
+    <!-- Résumé sélection -->
+    <div class="selection-summary" id="selectionSummary" style="display: none;">
+        <div class="card">
+            <div class="card-body">
+                <div class="summary-content">
+                    <div class="summary-info">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <span class="count" id="selectedCount">0</span> étudiant(s) sélectionné(s)
+                        </div>
+                    </div>
+                    
+                    <div class="summary-actions">
+                        <button class="btn-secondary btn-sm" id="deselectAll">
+                            <i class="fas fa-times"></i> Tout désélectionner
+                        </button>
+                        <button class="btn-primary btn-sm" id="sendBulkEmail">
+                            <i class="fas fa-envelope"></i> Envoyer email
+                        </button>
+                        <button class="btn-success btn-sm" id="exportSelected">
+                            <i class="fas fa-file-excel"></i> Exporter sélection
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal détails étudiant -->
+<div class="modal" id="studentDetailsModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-graduate"></i> Détails de l'étudiant</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="student-details-view" id="studentDetailsContent">
+                <!-- Les détails seront chargés dynamiquement via AJAX -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Fermer
+            </button>
+            <button class="btn-primary" id="printStudentCard">
+                <i class="fas fa-print"></i> Imprimer la fiche
+            </button>
+            <button class="btn-success" id="editStudent">
+                <i class="fas fa-edit"></i> Modifier
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal confirmation suppression -->
+<div class="modal" id="deleteConfirmationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Confirmation de suppression</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <h4>Êtes-vous sûr ?</h4>
+            <p>Vous êtes sur le point de supprimer l'étudiant :</p>
+            <p class="student-to-delete" id="studentToDeleteName"></p>
+            <p class="warning-text">Cette action est irréversible. Toutes les données associées seront perdues.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <form method="post" action="" id="deleteForm" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash-alt"></i> Supprimer définitivement
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="{% static 'js/Utilisateurs/liste_etudiants.js' %}"></script>
+
+<script>
+// Fonction pour changer le nombre de lignes par page
+function changeRowsPerPage(value) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('paginate_by', value);
+    url.searchParams.set('page', 1);
+    window.location.href = url.toString();
+}
+
+// Fonction pour charger les détails de l'étudiant via AJAX
+async function viewStudent(studentId) {
+    try {
+        const response = await fetch(`/etudiants/${studentId}/details/`);
+        const data = await response.json();
+        
+        // Remplir le modal avec les données
+        document.getElementById('studentDetailsContent').innerHTML = `
+            <div class="student-profile">
+                <div class="profile-avatar">
+                    ${data.first_name[0]}${data.last_name[0]}
+                </div>
+                <h4>${data.last_name} ${data.first_name}</h4>
+                <p class="matricule">${data.matricule}</p>
+                <span class="status-badge">
+                    Actif
+                </span>
+            </div>
+            
+            <div class="student-details">
+                <h4><i class="fas fa-info-circle"></i> Informations</h4>
+                <div class="student-details-grid">
+                    <div class="detail-item">
+                        <span class="label">Email</span>
+                        <span class="value">${data.email}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Téléphone</span>
+                        <span class="value">${data.contact || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Filière</span>
+                        <span class="value">${data.filiere}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Niveau</span>
+                        <span class="value">${data.niveau}</span>
+                    </div>
+                    <div class="detail-item full-width">
+                        <span class="label">Thème du mémoire</span>
+                        <span class="value">${data.theme_memoire}</span>
+                    </div>
+                </div>
+                
+                <h4><i class="fas fa-calendar"></i> Informations académiques</h4>
+                <div class="student-details-grid">
+                    <div class="detail-item">
+                        <span class="label">Année académique</span>
+                        <span class="value">${data.annee_academique}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Date d'inscription</span>
+                        <span class="value">${data.date_inscription}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('studentDetailsModal').classList.add('active');
+        
+        // Mettre à jour le lien de modification
+        document.getElementById('editStudent').onclick = function() {
+            window.location.href = `/etudiants/${studentId}/modifier/`;
+        };
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors du chargement des détails de l\'étudiant');
+    }
+}
+
+// Fonction pour préparer la suppression
+function confirmDeleteStudent(studentId, studentName) {
+    document.getElementById('studentToDeleteName').textContent = studentName;
+    document.getElementById('deleteForm').action = `/etudiants/${studentId}/supprimer/`;
+    document.getElementById('deleteConfirmationModal').classList.add('active');
+}
+
+// Initialiser les filtres
+document.addEventListener('DOMContentLoaded', function() {
+    // Soumettre le formulaire lors du changement des filtres
+    document.querySelectorAll('#filterFiliere, #filterNiveau, #filterAnnee').forEach(select => {
+        select.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    });
+});
+</script>
+{% endblock %}

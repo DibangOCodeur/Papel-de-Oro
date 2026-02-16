@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Service Impression Mémoires</title>
+    <link rel="stylesheet" href="{% static 'css/Utilisateurs/connexion.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="dark-mode">
+    <!-- Animation de fond -->
+    <div class="bg-animation">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
+        <div class="circle circle-4"></div>
+        <div class="circle circle-5"></div>
+        <div class="circle circle-6"></div>
+    </div>
+    
+    <div class="container">
+        <!-- Bouton mode clair/sombre -->
+        <button class="theme-toggle" id="themeToggle">
+            <i class="fas fa-moon"></i>
+            <i class="fas fa-sun"></i>
+            <span class="theme-ball"></span>
+        </button>
+        
+        <div class="login-container">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-print"></i>
+                    <h1>Dbg<span>Memo</span></h1>
+                </div>
+                <p class="tagline">Service d'impression et de mise en forme des mémoires pour étudiants</p>
+                <div class="features">
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Mise en forme professionnelle</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Conception de page de garde</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Suivi en temps réel</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Impression haute game</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Tombola avec 30% de remboursement</span>
+                    </div>
+                </div>
+                <div class="stats">
+                    <div class="stat">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <span class="number">7000+</span>
+                            <span class="label">Étudiants</span>
+                        </div>
+                    </div>
+                    <div class="stat">
+                        <i class="fas fa-file-pdf"></i>
+                        <div>
+                            <span class="number">450+</span>
+                            <span class="label">Mémoires traités</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <div class="form-header">
+                    <h2><i class="fas fa-sign-in-alt"></i> Connexion</h2>
+                    <p>Accédez à votre espace personnel</p>
+                </div>
+                
+                <form id="loginForm" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email"
+                                name="email"
+                                id="email"
+                                class="form-control"
+                                placeholder="prenom.nom@universite.ed.ci"
+                                required
+                                value="{{ form.email.value|default:'' }}">
+                            <div class="input-focus-line"></div>
+                        </div>
+                        {% if form.email.errors %}
+                            <div class="error-message" style="color: red; font-size: 14px; margin-top: 5px;">
+                                {{ form.email.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Mot de passe</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password"
+                            name="password"
+                            id="password"
+                            class="form-control"
+                            placeholder="Votre mot de passe"
+                            required>
+                            <div class="input-focus-line"></div>
+                        </div>
+                        {% if form.password.errors %}
+                            <div class="error-message" style="color: red; font-size: 14px; margin-top: 5px;">
+                                {{ form.password.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-options">
+                        <div class="remember">
+                            <input type="checkbox" id="remember">
+                            <label for="remember">Se souvenir de moi</label>
+                        </div>
+                        <a href="#" class="forgot-password">Mot de passe oublié ?</a>
+                    </div>
+                    <button type="submit" class="btn-login">
+                        <span class="btn-text">Se connecter</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+
+                    {% for message in messages %}
+                        <p style="color:red;">{{ message }}</p>
+                    {% endfor %}
+
+                    <div class="footer">
+                        <p>&copy; 2026 Service Impression Mémoires <strong>DbgMind's - DbgMemo - PapelDeOro</strong></p>
+                        <p>Clovis Anoman - Dibang'O</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/Utilisateurs/connexion.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,863 @@
+{% extends 'Utilisateurs/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Dossiers/liste_dossiers.css' %}">
+{% endblock %}
+
+{% block content %} 
+<main class="main-content">
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <h1>Gestion des Dossiers</h1>
+            <p>Suivi et gestion de tous les dossiers d'étudiants</p>
+        </div>
+        
+        <div class="header-right">
+            <div class="header-actions">
+                <button class="btn-secondary" id="refreshBtn">
+                    <i class="fas fa-sync-alt"></i> Actualiser
+                </button>
+                <a href="#" class="btn-primary">
+                    <i class="fas fa-folder-plus"></i> Nouveau dossier
+                </a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Statistiques rapides -->
+    <section class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-folder"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Dossiers</h3>
+                <p class="stat-number">{{ total_dossiers }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Validés</h3>
+                <p class="stat-number">{{ total_valides }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-truck"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Livrés</h3>
+                <p class="stat-number">{{ total_livres }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <h3>En attente</h3>
+                <p class="stat-number">{{ total_attente }}</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Contrôles et filtres -->
+    <section class="controls-section">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" id="filterForm">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label><i class="fas fa-search"></i> Recherche</label>
+                            <div class="search-box">
+                                <input type="text" name="search" id="searchInput" 
+                                       placeholder="Rechercher étudiant ou dossier..."
+                                       value="{{ request.GET.search }}">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fas fa-filter"></i> Statut</label>
+                            <select name="statut" id="filterStatut" class="filter-select">
+                                <option value="">Tous les statuts</option>
+                                <option value="en_attente" {% if request.GET.statut == 'en_attente' %}selected{% endif %}>
+                                    ⏳ En attente
+                                </option>
+                                <option value="valide" {% if request.GET.statut == 'valide' %}selected{% endif %}>
+                                    ✅ Validé
+                                </option>
+                                <option value="livre" {% if request.GET.statut == 'livre' %}selected{% endif %}>
+                                    🚚 Livré
+                                </option>
+                                <option value="incomplet" {% if request.GET.statut == 'incomplet' %}selected{% endif %}>
+                                    ❌ Incomplet
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fas fa-calendar"></i> Année académique</label>
+                            <select name="annee_academique" id="filterAnnee" class="filter-select">
+                                <option value="">Toutes les années</option>
+                                {% for annee in annees_academiques %}
+                                <option value="{{ annee.id }}"
+                                        {% if request.GET.annee_academique == annee.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ annee.annee_academique }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fas fa-graduation-cap"></i> Niveau</label>
+                            <select name="niveau" id="filterNiveau" class="filter-select">
+                                <option value="">Tous les niveaux</option>
+                                {% for niveau in niveaux %}
+                                <option value="{{ niveau.niveau|stringformat:"s" }}"
+                                        {% if request.GET.niveau == niveau.niveau|stringformat:"s" %}selected{% endif %}>
+                                    {{ niveau.niveau }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="advanced-filters" id="advancedFilters">
+                        <div class="controls-grid">
+                            <div class="control-group">
+                                <label><i class="fas fa-file-pdf"></i> Avec PDF</label>
+                                <select name="avec_pdf" id="filterPdf" class="filter-select">
+                                    <option value="">Tous</option>
+                                    <option value="oui" {% if request.GET.avec_pdf == 'oui' %}selected{% endif %}>
+                                        Avec support PDF
+                                    </option>
+                                    <option value="non" {% if request.GET.avec_pdf == 'non' %}selected{% endif %}>
+                                        Sans support PDF
+                                    </option>
+                                </select>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label><i class="fas fa-sort-amount-down"></i> Trier par</label>
+                                <select name="tri" id="filterTri" class="filter-select">
+                                    <option value="-date_creation" {% if request.GET.tri == '-date_creation' %}selected{% endif %}>
+                                        Date création (récent)
+                                    </option>
+                                    <option value="date_creation" {% if request.GET.tri == 'date_creation' %}selected{% endif %}>
+                                        Date création (ancien)
+                                    </option>
+                                    <option value="etudiant__last_name" {% if request.GET.tri == 'etudiant__last_name' %}selected{% endif %}>
+                                        Nom étudiant A-Z
+                                    </option>
+                                    <option value="-date_livraison" {% if request.GET.tri == '-date_livraison' %}selected{% endif %}>
+                                        Date livraison (récent)
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <div class="left-actions">
+                            <a href="{% url 'liste_memoire' %}" class="btn-secondary" id="resetFilters">
+                                <i class="fas fa-redo"></i> Réinitialiser
+                            </a>
+                            <button type="button" class="btn-secondary" id="toggleAdvancedFilters">
+                                <i class="fas fa-sliders-h"></i> Filtres avancés
+                            </button>
+                        </div>
+                        
+                        <div class="right-actions">
+                            <div class="export-buttons">
+                                <button type="button" class="btn-export" id="exportPDF">
+                                    <i class="fas fa-file-pdf"></i> Exporter PDF
+                                </button>
+                                <button type="button" class="btn-export btn-export-excel" id="exportExcel">
+                                    <i class="fas fa-file-excel"></i> Exporter Excel
+                                </button>
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-filter"></i> Appliquer filtres
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Tableau des dossiers -->
+    <section class="dossiers-table-section">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-left">
+                    <h3><i class="fas fa-list"></i> Liste des dossiers</h3>
+                    <span class="total-count">{{ dossiers|length }} dossiers</span>
+                </div>
+                <div class="card-header-right">
+                    <div class="batch-actions">
+                        <select id="batchAction" class="batch-select">
+                            <option value="">Actions groupées...</option>
+                            <option value="validate">Valider les dossiers</option>
+                            <option value="mark_delivered">Marquer comme livré</option>
+                            <option value="export">Exporter sélection</option>
+                            <option value="delete">Supprimer</option>
+                        </select>
+                        <button class="btn-primary btn-sm" id="applyBatchAction">
+                            <i class="fas fa-play"></i> Appliquer
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="dossiersTable" class="dossiers-table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAll">
+                                </th>
+                                <th>Étudiant</th>
+                                <th>Matricule</th>
+                                <th>Filière</th>
+                                <th>Niveau</th>
+                                <th>Paiement</th>
+                                <th>Statut</th>
+                                <th>Livraison</th>
+                                <th>Support PDF</th>
+                                <th>Création</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dossiersTableBody">
+                            {% for dossier in dossiers %}
+                            <tr data-id="{{ dossier.id }}" class="dossier-row dossier-status-{{ dossier.statut }}">
+                                <td>
+                                    <input type="checkbox" class="dossier-checkbox" 
+                                           data-id="{{ dossier.id }}">
+                                </td>
+                                <td>
+                                    <div class="student-name-cell">
+                                        <div class="student-avatar-small">
+                                            {{ dossier.etudiant.first_name|first|upper }}{{ dossier.etudiant.last_name|first|upper }}
+                                        </div>
+                                        <div class="student-info">
+                                            <span class="student-name">{{ dossier.etudiant.last_name }} {{ dossier.etudiant.first_name }}</span>
+                                            <span class="student-email">{{ dossier.etudiant.email }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="matricule-badge">{{ dossier.etudiant.matricule|default:"N/A" }}</span>
+                                </td>
+                                <td>
+                                    <div class="filiere-info">
+                                        <span class="filiere-name">{{ dossier.etudiant.filiere.nom|truncatechars:20 }}</span>
+                                        <span class="filiere-sigle">{{ dossier.etudiant.filiere.abreviation }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ dossier.etudiant.niveau.niveau }}</td>
+                                <td>
+                                    {% if dossier.paiement %}
+                                    <div class="payment-status">
+                                        <span class="payment-amount">{{ dossier.paiement.montant_total|floatformat:0 }} FCFA</span>
+                                        <span class="payment-date">{{ dossier.paiement.date_paiement|date:"d/m/Y" }}</span>
+                                    </div>
+                                    {% else %}
+                                    <span class="no-payment">Non payé</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if dossier.statut %}
+                                    <span class="status-badge status-validated">
+                                        <i class="fas fa-check-circle"></i> Validé
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge status-pending">
+                                        <i class="fas fa-clock"></i> En attente
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if dossier.livraison %}
+                                    <span class="status-badge status-delivered">
+                                        <i class="fas fa-truck"></i> Livré
+                                    </span>
+                                    <div class="delivery-date">
+                                        {{ dossier.date_livraison|date:"d/m/Y" }}
+                                    </div>
+                                    {% else %}
+                                    <span class="status-badge status-not-delivered">
+                                        <i class="fas fa-hourglass-half"></i> Non livré
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if dossier.support_pdf %}
+                                    <a href="{{ dossier.support_pdf.url }}" 
+                                       class="pdf-link" 
+                                       target="_blank"
+                                       title="Télécharger PDF">
+                                        <i class="fas fa-file-pdf"></i>
+                                        <span class="pdf-size">
+                                            {% if dossier.support_pdf.size < 1024000 %}
+                                                {{ dossier.support_pdf.size|filesizeformat }}
+                                            {% else %}
+                                                {{ dossier.support_pdf.size|filesizeformat }}
+                                            {% endif %}
+                                        </span>
+                                    </a>
+                                    {% else %}
+                                    <span class="no-pdf">
+                                        <i class="fas fa-times-circle"></i> Non uploadé
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="date-info">
+                                        <div class="creation-date">
+                                            {{ dossier.date_creation|date:"d/m/Y" }}
+                                        </div>
+                                        <div class="creation-time">
+                                            {{ dossier.date_creation|date:"H:i" }}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a class="action-icon-btn view"
+                                            href="#"
+                                            title="Voir détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        
+                                        <a class="action-icon-btn edit"
+                                            href="#"
+                                            title="Modifier dossier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        
+                                        {% if dossier.support_pdf %}
+                                        <a class="action-icon-btn download"
+                                            href="{{ dossier.support_pdf.url }}"
+                                            title="Télécharger PDF"
+                                            download>
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% endif %}
+                                        
+                                        {% if not dossier.statut %}
+                                        <button class="action-icon-btn validate"
+                                                data-id="{{ dossier.id }}"
+                                                data-action="validate"
+                                                title="Valider dossier">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        {% if dossier.statut and not dossier.livraison %}
+                                        <button class="action-icon-btn deliver"
+                                                data-id="{{ dossier.id }}"
+                                                data-action="deliver"
+                                                title="Marquer comme livré">
+                                            <i class="fas fa-truck"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        <button class="action-icon-btn delete"
+                                                data-id="{{ dossier.id }}"
+                                                data-name="{{ dossier.etudiant.last_name }} {{ dossier.etudiant.first_name }}"
+                                                title="Supprimer dossier">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="11" class="text-center">
+                                    <div class="empty-state">
+                                        <i class="fas fa-folder-open fa-3x"></i>
+                                        <h4>Aucun dossier trouvé</h4>
+                                        <p>Aucun dossier ne correspond à vos critères de recherche.</p>
+                                        <a href="#" class="btn-primary">
+                                            <i class="fas fa-plus"></i> Créer un premier dossier
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div class="table-footer">
+                    <div class="pagination-info">
+                        Affichage de <span id="startRow">{{ page_obj.start_index }}</span> 
+                        à <span id="endRow">{{ page_obj.end_index }}</span> 
+                        sur <span id="totalRows">{{ paginator.count }}</span> dossiers
+                    </div>
+                    
+                    <div class="pagination-controls">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="pagination-btn" id="prevPage">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        {% else %}
+                        <span class="pagination-btn disabled">
+                            <i class="fas fa-chevron-left"></i>
+                        </span>
+                        {% endif %}
+                        
+                        <span class="page-numbers">
+                            Page <span id="currentPage">{{ page_obj.number }}</span> 
+                            sur <span id="totalPages">{{ paginator.num_pages }}</span>
+                        </span>
+                        
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="pagination-btn" id="nextPage">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% else %}
+                        <span class="pagination-btn disabled">
+                            <i class="fas fa-chevron-right"></i>
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="rows-per-page">
+                        <label>Afficher :</label>
+                        <select id="rowsPerPage" onchange="changeRowsPerPage(this.value)">
+                            <option value="10" {% if paginate_by == 10 %}selected{% endif %}>10</option>
+                            <option value="25" {% if paginate_by == 25 %}selected{% endif %}>25</option>
+                            <option value="50" {% if paginate_by == 50 %}selected{% endif %}>50</option>
+                            <option value="100" {% if paginate_by == 100 %}selected{% endif %}>100</option>
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+    
+    <!-- Résumé sélection -->
+    <div class="selection-summary" id="selectionSummary" style="display: none;">
+        <div class="card">
+            <div class="card-body">
+                <div class="summary-content">
+                    <div class="summary-info">
+                        <i class="fas fa-folder"></i>
+                        <div>
+                            <span class="count" id="selectedCount">0</span> dossier(s) sélectionné(s)
+                        </div>
+                    </div>
+                    
+                    <div class="summary-actions">
+                        <button class="btn-secondary btn-sm" id="deselectAll">
+                            <i class="fas fa-times"></i> Tout désélectionner
+                        </button>
+                        <button class="btn-primary btn-sm" id="validateSelected">
+                            <i class="fas fa-check"></i> Valider sélection
+                        </button>
+                        <button class="btn-success btn-sm" id="markDeliveredSelected">
+                            <i class="fas fa-truck"></i> Marquer comme livré
+                        </button>
+                        <button class="btn-danger btn-sm" id="deleteSelected">
+                            <i class="fas fa-trash-alt"></i> Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal validation dossier -->
+<div class="modal" id="validateDossierModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-check-circle"></i> Validation de dossier</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <h4>Confirmer la validation</h4>
+            <p>Vous êtes sur le point de valider le dossier de :</p>
+            <p class="dossier-info" id="dossierValidateName"></p>
+            <div class="validation-notes">
+                <label for="validationNotes">Notes (optionnel) :</label>
+                <textarea id="validationNotes" placeholder="Ajouter des notes sur cette validation..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button class="btn-primary" id="confirmValidate">
+                <i class="fas fa-check"></i> Confirmer la validation
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal livraison dossier -->
+<div class="modal" id="deliverDossierModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-truck"></i> Livraison de dossier</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="delivery-icon">
+                <i class="fas fa-shipping-fast"></i>
+            </div>
+            <h4>Confirmer la livraison</h4>
+            <p>Vous êtes sur le point de marquer comme livré le dossier de :</p>
+            <p class="dossier-info" id="dossierDeliverName"></p>
+            
+            <div class="delivery-details">
+                <div class="form-group">
+                    <label for="deliveryDate">Date de livraison :</label>
+                    <input type="date" id="deliveryDate" value="{% now 'Y-m-d' %}">
+                </div>
+                <div class="form-group">
+                    <label for="deliveryNotes">Notes de livraison :</label>
+                    <textarea id="deliveryNotes" placeholder="Informations sur la livraison..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button class="btn-success" id="confirmDeliver">
+                <i class="fas fa-truck"></i> Confirmer la livraison
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal confirmation suppression -->
+<div class="modal" id="deleteConfirmationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Confirmation de suppression</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <h4>Êtes-vous sûr ?</h4>
+            <p>Vous êtes sur le point de supprimer le dossier de :</p>
+            <p class="dossier-to-delete" id="dossierToDeleteName"></p>
+            <div class="warning-details">
+                <p><i class="fas fa-exclamation-circle"></i> Cette action supprimera également :</p>
+                <ul>
+                    <li>Les informations du dossier</li>
+                    <li>Le fichier PDF associé (s'il existe)</li>
+                    <li>L'historique du dossier</li>
+                </ul>
+            </div>
+            <p class="warning-text">Cette action est irréversible. Toutes les données associées seront perdues.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <form method="post" action="" id="deleteForm" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash-alt"></i> Supprimer définitivement
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal téléchargement multiple -->
+<div class="modal" id="batchDownloadModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-download"></i> Téléchargement multiple</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="download-icon">
+                <i class="fas fa-file-archive"></i>
+            </div>
+            <h4>Préparation du téléchargement</h4>
+            <p>Vous êtes sur le point de télécharger <span id="downloadCount">0</span> dossiers.</p>
+            
+            <div class="download-options">
+                <h5>Options de téléchargement :</h5>
+                <div class="option-group">
+                    <input type="checkbox" id="includePDF" checked>
+                    <label for="includePDF">Inclure les fichiers PDF</label>
+                </div>
+                <div class="option-group">
+                    <input type="checkbox" id="includeDetails" checked>
+                    <label for="includeDetails">Inclure les détails (Excel)</label>
+                </div>
+                <div class="option-group">
+                    <label for="downloadFormat">Format :</label>
+                    <select id="downloadFormat">
+                        <option value="zip">Archive ZIP</option>
+                        <option value="pdf">PDF combiné</option>
+                        <option value="excel">Fichier Excel</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="download-progress" id="downloadProgress" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Préparation en cours...</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button class="btn-primary" id="startDownload">
+                <i class="fas fa-download"></i> Démarrer le téléchargement
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="{% static 'js/dossiers/liste_dossiers.js' %}"></script>
+
+<script>
+// Variables globales
+let selectedDossiers = new Set();
+
+// Fonction pour changer le nombre de lignes par page
+function changeRowsPerPage(value) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('paginate_by', value);
+    url.searchParams.set('page', 1);
+    window.location.href = url.toString();
+}
+
+// Fonction pour valider un dossier
+function validateDossier(dossierId, dossierName) {
+    document.getElementById('dossierValidateName').textContent = dossierName;
+    document.getElementById('confirmValidate').dataset.id = dossierId;
+    document.getElementById('validateDossierModal').classList.add('active');
+}
+
+// Fonction pour marquer comme livré
+function deliverDossier(dossierId, dossierName) {
+    document.getElementById('dossierDeliverName').textContent = dossierName;
+    document.getElementById('confirmDeliver').dataset.id = dossierId;
+    document.getElementById('deliverDossierModal').classList.add('active');
+}
+
+// Fonction pour supprimer un dossier
+function confirmDeleteDossier(dossierId, dossierName) {
+    document.getElementById('dossierToDeleteName').textContent = dossierName;
+    document.getElementById('deleteForm').action = `/dossiers/${dossierId}/supprimer/`;
+    document.getElementById('deleteConfirmationModal').classList.add('active');
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle filtres avancés
+    document.getElementById('toggleAdvancedFilters').addEventListener('click', function() {
+        const advancedFilters = document.getElementById('advancedFilters');
+        advancedFilters.style.display = advancedFilters.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    // Soumettre le formulaire lors du changement des filtres
+    document.querySelectorAll('#filterStatut, #filterAnnee, #filterNiveau, #filterPdf, #filterTri').forEach(select => {
+        select.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    });
+    
+    // Sélection multiple
+    document.getElementById('selectAll').addEventListener('change', function(e) {
+        const checkboxes = document.querySelectorAll('.dossier-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = e.target.checked;
+            updateSelection(checkbox);
+        });
+    });
+    
+    // Mise à jour de la sélection
+    document.querySelectorAll('.dossier-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelection(this);
+        });
+    });
+    
+    // Bouton actualiser
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        window.location.reload();
+    });
+});
+
+// Mettre à jour la sélection
+function updateSelection(checkbox) {
+    const dossierId = checkbox.dataset.id;
+    
+    if (checkbox.checked) {
+        selectedDossiers.add(dossierId);
+    } else {
+        selectedDossiers.delete(dossierId);
+    }
+    
+    updateSelectionSummary();
+}
+
+// Mettre à jour le résumé de sélection
+function updateSelectionSummary() {
+    const count = selectedDossiers.size;
+    const summary = document.getElementById('selectionSummary');
+    const countElement = document.getElementById('selectedCount');
+    
+    countElement.textContent = count;
+    
+    if (count > 0) {
+        summary.style.display = 'block';
+    } else {
+        summary.style.display = 'none';
+    }
+}
+
+// Actions de bouton
+document.getElementById('deselectAll')?.addEventListener('click', function() {
+    document.querySelectorAll('.dossier-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+        updateSelection(checkbox);
+    });
+    document.getElementById('selectAll').checked = false;
+});
+
+// Valider la sélection
+document.getElementById('validateSelected')?.addEventListener('click', function() {
+    if (selectedDossiers.size === 0) {
+        alert('Veuillez sélectionner au moins un dossier.');
+        return;
+    }
+    
+    if (confirm(`Êtes-vous sûr de vouloir valider ${selectedDossiers.size} dossier(s) ?`)) {
+        // Envoyer la requête AJAX
+        fetch('/dossiers/valider-multiple/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ dossier_ids: Array.from(selectedDossiers) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`${data.count} dossier(s) validé(s) avec succès.`);
+                window.location.reload();
+            } else {
+                alert('Erreur lors de la validation.');
+            }
+        });
+    }
+});
+
+// Marquer comme livré la sélection
+document.getElementById('markDeliveredSelected')?.addEventListener('click', function() {
+    if (selectedDossiers.size === 0) {
+        alert('Veuillez sélectionner au moins un dossier.');
+        return;
+    }
+    
+    if (confirm(`Êtes-vous sûr de vouloir marquer ${selectedDossiers.size} dossier(s) comme livré(s) ?`)) {
+        // Envoyer la requête AJAX
+        fetch('/dossiers/livrer-multiple/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ dossier_ids: Array.from(selectedDossiers) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`${data.count} dossier(s) marqué(s) comme livré(s) avec succès.`);
+                window.location.reload();
+            } else {
+                alert('Erreur lors de la livraison.');
+            }
+        });
+    }
+});
+
+// Supprimer la sélection
+document.getElementById('deleteSelected')?.addEventListener('click', function() {
+    if (selectedDossiers.size === 0) {
+        alert('Veuillez sélectionner au moins un dossier.');
+        return;
+    }
+    
+    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedDossiers.size} dossier(s) ? Cette action est irréversible.`)) {
+        // Envoyer la requête AJAX
+        fetch('/dossiers/supprimer-multiple/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ dossier_ids: Array.from(selectedDossiers) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`${data.count} dossier(s) supprimé(s) avec succès.`);
+                window.location.reload();
+            } else {
+                alert('Erreur lors de la suppression.');
+            }
+        });
+    }
+});
+
+// Helper pour récupérer le cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

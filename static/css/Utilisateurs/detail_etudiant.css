@@ -1,0 +1,629 @@
+/* =========================================== */
+/* STYLES POUR LA PAGE DÉTAIL ÉTUDIANT */
+/* =========================================== */
+
+/* En-tête avec breadcrumb */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--text-light);
+}
+
+.breadcrumb a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb i {
+    font-size: 12px;
+}
+
+.breadcrumb span {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+/* Conteneur principal */
+.student-detail-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* Carte profil */
+.profile-card .card-body {
+    padding: 30px;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+}
+
+.profile-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 48px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.profile-info h2 {
+    margin: 0 0 10px 0;
+    color: var(--text-color);
+    font-size: 28px;
+}
+
+.profile-metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.matricule {
+    background: rgba(106, 17, 203, 0.1);
+    color: var(--primary-color);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background: rgba(46, 204, 113, 0.2);
+    color: #27ae60;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.status-member {
+    background: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.profile-email {
+    color: var(--text-light);
+    font-size: 16px;
+    margin: 0;
+}
+
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+    .profile-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(106, 17, 203, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* Grille d'informations */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+}
+
+@media (max-width: 1200px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.info-card {
+    height: 100%;
+}
+
+.info-card.full-width {
+    grid-column: 1 / -1;
+}
+
+.info-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-card .card-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    color: var(--text-color);
+}
+
+.info-card .card-body {
+    padding: 20px;
+}
+
+/* Liste d'informations */
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.info-item.full-width {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label {
+    font-size: 13px;
+    color: var(--text-light);
+    font-weight: 500;
+    flex: 1;
+}
+
+.info-value {
+    font-size: 14px;
+    color: var(--text-color);
+    font-weight: 500;
+    text-align: right;
+    flex: 2;
+}
+
+.info-item.full-width .info-value {
+    text-align: left;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    width: 100%;
+}
+
+/* Informations financières */
+.finance-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.finance-item.total {
+    text-align: center;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(106, 17, 203, 0.1), rgba(37, 117, 252, 0.1));
+    border-radius: 10px;
+    border: 1px solid rgba(106, 17, 203, 0.2);
+}
+
+.finance-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-light);
+    margin-bottom: 5px;
+}
+
+.finance-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.finance-item.total .finance-value {
+    font-size: 32px;
+}
+
+.finance-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+@media (max-width: 768px) {
+    .finance-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.finance-grid .finance-item {
+    text-align: center;
+    padding: 15px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.finance-grid .finance-label {
+    font-size: 11px;
+}
+
+.finance-grid .finance-value {
+    font-size: 18px;
+    color: var(--text-color);
+}
+
+.payment-history {
+    margin-top: 20px;
+}
+
+.payment-history h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: var(--text-color);
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.history-item:hover {
+    background: rgba(106, 17, 203, 0.05);
+    border-color: var(--primary-color);
+}
+
+.history-date {
+    font-size: 13px;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.history-amount {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.history-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.history-status.status-paid {
+    background: rgba(46, 204, 113, 0.2);
+    color: #27ae60;
+}
+
+.history-status.status-pending {
+    background: rgba(241, 196, 15, 0.2);
+    color: #f39c12;
+}
+
+.history-status.status-partial {
+    background: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+}
+
+/* Informations fichiers */
+.file-info {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.file-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.file-label {
+    font-size: 13px;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.file-value {
+    font-size: 14px;
+    color: var(--text-color);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.file-link:hover {
+    text-decoration: underline;
+}
+
+.file-link i {
+    margin-right: 5px;
+}
+
+.file-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Timeline des activités */
+.timeline {
+    position: relative;
+    padding-left: 40px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-icon {
+    position: absolute;
+    left: -40px;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-color);
+    border: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 16px;
+}
+
+.timeline-content {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.timeline-title {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.timeline-date {
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+.timeline-description {
+    font-size: 13px;
+    color: var(--text-light);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Badges de statut supplémentaires */
+.status-completed {
+    background: rgba(46, 204, 113, 0.2);
+    color: #27ae60;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.status-pending {
+    background: rgba(241, 196, 15, 0.2);
+    color: #f39c12;
+    border: 1px solid rgba(241, 196, 15, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .profile-card .card-body {
+        padding: 20px;
+    }
+    
+    .profile-info h2 {
+        font-size: 24px;
+    }
+    
+    .finance-item.total .finance-value {
+        font-size: 24px;
+    }
+    
+    .file-actions {
+        flex-direction: column;
+    }
+    
+    .timeline {
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        left: 15px;
+    }
+    
+    .timeline-icon {
+        left: -30px;
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.student-detail-container {
+    animation: fadeIn 0.5s ease;
+}
+
+/* Formulaires dans modals */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    background: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-color);
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+}
+
+textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-text {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-top: 5px;
+}

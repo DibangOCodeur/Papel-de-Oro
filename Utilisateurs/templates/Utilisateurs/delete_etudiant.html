@@ -1,0 +1,522 @@
+{% extends 'Utilisateurs/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Utilisateurs/detail_etudiant.css' %}">
+<style>
+/* Styles pour la confirmation de suppression simplifiée */
+.confirmation-minimal {
+    max-width: 500px;
+    margin: 80px auto;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.minimal-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.minimal-card:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Header */
+.minimal-header {
+    padding: 25px 30px;
+    background: linear-gradient(135deg, #ff6b6b, #ff4757);
+    color: white;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.minimal-header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+}
+
+.minimal-header-content {
+    position: relative;
+    z-index: 2;
+}
+
+.minimal-header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.warning-icon {
+    font-size: 22px;
+    animation: warningPulse 2s infinite;
+}
+
+@keyframes warningPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15); opacity: 0.8; }
+}
+
+/* Body */
+.minimal-body {
+    padding: 30px;
+}
+
+/* Étudiant info */
+.student-preview {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(106, 17, 203, 0.05);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.student-avatar-sm {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.student-info-sm {
+    flex: 1;
+}
+
+.student-name-sm {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 6px;
+}
+
+.student-details-sm {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.student-details-sm span {
+    font-size: 13px;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.student-details-sm i {
+    font-size: 12px;
+    width: 16px;
+    color: var(--primary-color);
+}
+
+/* Message d'avertissement */
+.warning-message {
+    background: rgba(255, 107, 107, 0.08);
+    border: 1px solid rgba(255, 107, 107, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.warning-message p {
+    color: var(--text-color);
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.warning-message p i {
+    color: #ff4757;
+    font-size: 16px;
+}
+
+/* Actions */
+.confirmation-actions-sm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.btn-delete-minimal {
+    background: linear-gradient(135deg, #ff6b6b, #ff4757);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.btn-delete-minimal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+}
+
+.btn-delete-minimal:active {
+    transform: translateY(0);
+}
+
+.btn-cancel-minimal {
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 2px solid var(--border-color);
+    padding: 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    text-decoration: none;
+}
+
+.btn-cancel-minimal:hover {
+    background: rgba(106, 17, 203, 0.05);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+/* Footer */
+.minimal-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.back-link-minimal {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition);
+}
+
+.back-link-minimal:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+/* Animation */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.confirmation-minimal {
+    animation: slideInUp 0.5s ease-out;
+}
+
+/* Badge de danger */
+.danger-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #ff4757;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 12px;
+    transform: rotate(5deg);
+    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .confirmation-minimal {
+        margin: 40px 20px;
+    }
+    
+    .minimal-header {
+        padding: 20px;
+    }
+    
+    .minimal-header h1 {
+        font-size: 18px;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .minimal-body {
+        padding: 25px 20px;
+    }
+    
+    .student-preview {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .btn-delete-minimal,
+    .btn-cancel-minimal {
+        padding: 14px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    .minimal-header h1 {
+        font-size: 16px;
+    }
+    
+    .student-name-sm {
+        font-size: 16px;
+    }
+}
+
+/* Style pour l'état de suppression */
+.deleting-state {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.deleting-state .btn-delete-minimal {
+    background: #95a5a6;
+    cursor: not-allowed;
+}
+
+.deleting-state .btn-delete-minimal i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confirmation-minimal">
+    <div class="minimal-card">
+        <div class="minimal-header">
+            <div class="danger-badge">DANGER</div>
+            <div class="minimal-header-content">
+                <h1>
+                    <i class="fas fa-skull-crossbones warning-icon"></i>
+                    Suppression définitive
+                </h1>
+            </div>
+        </div>
+        
+        <div class="minimal-body">
+            <!-- Aperçu étudiant -->
+            <div class="student-preview">
+                <div class="student-avatar-sm">
+                    {{ etudiant.first_name|first|upper }}{{ etudiant.last_name|first|upper }}
+                </div>
+                <div class="student-info-sm">
+                    <div class="student-name-sm">{{ etudiant.last_name }} {{ etudiant.first_name }}</div>
+                    <div class="student-details-sm">
+                        <span>
+                            <i class="fas fa-id-card"></i>
+                            {{ etudiant.matricule }}
+                        </span>
+                        <span>
+                            <i class="fas fa-graduation-cap"></i>
+                            {{ etudiant.filiere.nom }} • {{ etudiant.niveau.niveau }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Message d'avertissement -->
+            <div class="warning-message">
+                <p>
+                    <i class="fas fa-radiation-alt"></i>
+                    Cette action supprime TOUTES les données de manière irréversible
+                </p>
+            </div>
+            
+            <!-- Actions -->
+            <form method="post" action="{% url 'delete_etudiant' etudiant.id %}" class="confirmation-form" id="deleteForm">
+                {% csrf_token %}
+                <div class="confirmation-actions-sm">
+                    <button type="submit" class="btn-delete-minimal" id="deleteButton">
+                        <i class="fas fa-trash-alt"></i>
+                        Confirmer la suppression
+                    </button>
+                    
+                    <a href="{% url 'detail_etudiant' etudiant.id %}" class="btn-cancel-minimal">
+                        <i class="fas fa-times"></i>
+                        Annuler et retourner
+                    </a>
+                </div>
+            </form>
+            
+            <!-- Footer -->
+            <div class="minimal-footer">
+                <a href="{% url 'liste_etudiant' %}" class="back-link-minimal">
+                    <i class="fas fa-arrow-left"></i>
+                    Retour à la liste complète
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Version minimaliste et efficace
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForm = document.getElementById('deleteForm');
+    const deleteButton = document.getElementById('deleteButton');
+    const confirmationCard = document.querySelector('.minimal-card');
+    
+    if (!deleteForm) return;
+    
+    // Double confirmation avec messages clairs
+    deleteForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Première confirmation standard
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
+            return false;
+        }
+        
+        // Deuxième confirmation plus explicite
+        const confirmMessage = `⚠️ CONFIRMATION FINALE ⚠️\n\n` +
+            `L'étudiant sera supprimé PERMANENTEMENT :\n` +
+            `• ${etudiantInfo.last_name} ${etudiantInfo.first_name}\n` +
+            `• Matricule : ${etudiantInfo.matricule}\n` +
+            `• Filière : ${etudiantInfo.filiere}\n\n` +
+            `Toutes les données seront PERDUES.\n\n` +
+            `Tapez "SUPPRIMER" pour confirmer :`;
+        
+        const userInput = prompt(confirmMessage);
+        
+        if (userInput && userInput.trim().toUpperCase() === 'SUPPRIMER') {
+            // Mettre en état de suppression
+            deleteButton.disabled = true;
+            deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Suppression en cours...';
+            confirmationCard.classList.add('deleting-state');
+            
+            // Soumettre le formulaire après un petit délai
+            setTimeout(() => {
+                deleteForm.submit();
+            }, 500);
+        } else {
+            // Message si annulation
+            alert('Suppression annulée.');
+            
+            // Petit effet visuel d'annulation
+            confirmationCard.style.animation = 'none';
+            setTimeout(() => {
+                confirmationCard.style.animation = 'slideInUp 0.5s ease-out';
+            }, 10);
+        }
+    });
+    
+    // Effet visuel au survol du bouton de suppression
+    deleteButton.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-3px) scale(1.02)';
+        this.style.boxShadow = '0 12px 25px rgba(255, 107, 107, 0.4)';
+    });
+    
+    deleteButton.addEventListener('mouseleave', function() {
+        this.style.transform = '';
+        this.style.boxShadow = '';
+    });
+    
+    // Effet visuel au clic sur annuler
+    const cancelBtn = document.querySelector('.btn-cancel-minimal');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function(e) {
+            // Petit effet visuel avant redirection
+            const card = document.querySelector('.minimal-card');
+            card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+            card.style.transform = 'translateX(-20px)';
+            card.style.opacity = '0.7';
+            
+            setTimeout(() => {
+                window.location.href = this.href;
+            }, 200);
+            
+            e.preventDefault();
+        });
+    }
+    
+    // Informations de l'étudiant pour les confirmations
+    const etudiantInfo = {
+        last_name: '{{ etudiant.last_name|escapejs }}',
+        first_name: '{{ etudiant.first_name|escapejs }}',
+        matricule: '{{ etudiant.matricule|escapejs }}',
+        filiere: '{{ etudiant.filiere.nom|escapejs }}'
+    };
+    
+    // Effet de secousse sur le bouton delete au chargement
+    setTimeout(() => {
+        deleteButton.style.animation = 'shake 0.5s ease';
+        deleteButton.style.animationIterationCount = '2';
+        
+        // Définir l'animation shake
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }, 1000);
+    
+    // Empêcher la soumission avec Enter
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

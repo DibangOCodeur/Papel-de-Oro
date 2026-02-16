@@ -1,0 +1,300 @@
+/* =========================================== */
+/* STYLES AJOUTÉS POUR LA MODIFICATION */
+/* =========================================== */
+
+/* Actions rapides */
+.quick-actions {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 15px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    font-size: 14px;
+    text-align: center;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
+    color: white;
+}
+
+.btn-action.secondary {
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 2px solid var(--border-color);
+}
+
+.btn-action.secondary:hover {
+    background: rgba(106, 17, 203, 0.1);
+    border-color: var(--primary-color);
+}
+
+.btn-action.danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.btn-action.danger:hover {
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+}
+
+/* Historique des paiements */
+.existing-payment-info {
+    background: rgba(106, 17, 203, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.existing-payment-info h5 {
+    font-size: 15px;
+    color: var(--text-color);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.existing-payment-info h5 i {
+    color: var(--primary-color);
+}
+
+.payment-history {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.payment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.payment-item:hover {
+    transform: translateX(5px);
+    border-color: var(--primary-color);
+}
+
+.payment-date {
+    font-size: 13px;
+    color: var(--text-light);
+    min-width: 120px;
+}
+
+.payment-amount {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 14px;
+}
+
+.payment-source {
+    font-size: 13px;
+    color: var(--text-color);
+    background: rgba(106, 17, 203, 0.1);
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.payment-status {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.payment-status.pending {
+    background: rgba(243, 156, 18, 0.1);
+    color: #f39c12;
+}
+
+.payment-status.completed {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+}
+
+/* État du dossier */
+.dossier-status {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.status-item:last-child {
+    border-bottom: none;
+}
+
+.status-item span:first-child {
+    font-size: 13px;
+    color: var(--text-light);
+}
+
+.status-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.pending {
+    background: rgba(243, 156, 18, 0.1);
+    color: #f39c12;
+}
+
+.status-badge.completed {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+}
+
+/* Fichier existant */
+.existing-file {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(52, 152, 219, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid #3498db;
+}
+
+.existing-file i {
+    color: #3498db;
+}
+
+.existing-file a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.existing-file a:hover {
+    text-decoration: underline;
+}
+
+/* Animation pour la modification */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.card {
+    animation: slideInRight 0.5s ease-out;
+}
+
+/* Ajustements pour le responsive */
+@media (max-width: 768px) {
+    .quick-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        flex: 1;
+        min-width: 150px;
+        font-size: 13px;
+        padding: 10px 12px;
+    }
+    
+    .payment-item {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+    
+    .payment-date {
+        min-width: auto;
+    }
+    
+    .existing-payment-info {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .quick-actions {
+        flex-direction: column;
+    }
+    
+    .btn-action {
+        width: 100%;
+    }
+    
+    .payment-history {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+}
+
+/* Styles pour le défilement fluide */
+@media (max-width: 768px) {
+    .register-section {
+        overflow: hidden;
+    }
+    
+    .card-body {
+        max-height: 70vh;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    
+    .preview-card {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    /* Scrollbar personnalisée pour mobile */
+    .card-body::-webkit-scrollbar,
+    .preview-card::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .card-body::-webkit-scrollbar-track,
+    .preview-card::-webkit-scrollbar-track {
+        background: var(--border-color);
+        border-radius: 10px;
+    }
+    
+    .card-body::-webkit-scrollbar-thumb,
+    .preview-card::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 10px;
+    }
+}

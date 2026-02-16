@@ -1,0 +1,703 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu de Réduction - {{ paiement.reference }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Ajoutez le token CSRF -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .grattage-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .grattage-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .student-info {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .avatar {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .student-details h3 {
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .student-details p {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .scratch-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scratch-canvas {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="none" stroke="%23000" stroke-width="3"/></svg>') 20 20, auto;
+            touch-action: none;
+        }
+
+        .scratch-result {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .scratch-result.revealed {
+            display: block;
+        }
+
+        .result-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .result-percentage {
+            font-size: 48px;
+            font-weight: bold;
+            color: #38a169;
+            margin-bottom: 10px;
+        }
+
+        .result-message {
+            font-size: 18px;
+            color: #4a5568;
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 16px;
+        }
+
+        .instructions i {
+            font-size: 40px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #38a169;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(56, 161, 105, 0.4);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #f8f9ff;
+            transform: translateY(-2px);
+        }
+
+        .amount-info {
+            background: #f0fff4;
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 5px solid #38a169;
+            margin-bottom: 30px;
+        }
+
+        .amount-info p {
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+
+        .amount-info strong {
+            color: #38a169;
+        }
+
+        .probabilities {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .probabilities h4 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .probability-list {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .probability-item {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .probability-percent {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .probability-chance {
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1000;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(1000px) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .probability-list {
+                flex-direction: column;
+            }
+            
+            .scratch-card {
+                min-height: 250px;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .bounce {
+            animation: bounce 0.5s ease infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="grattage-container">
+        <div class="grattage-card">
+            <div class="header">
+                <h1><i class="fas fa-gift"></i> Jeu Tombola</h1>
+                <p>Grattez pour découvrir votre pourcentage de réduction !</p>
+            </div>
+            
+            <div class="content">
+                <!-- Informations étudiant -->
+                <div class="student-info">
+                    <div class="avatar">
+                        {{ paiement.etudiant.first_name|first|upper }}{{ paiement.etudiant.last_name|first|upper }}
+                    </div>
+                    <div class="student-details">
+                        <h3>{{ paiement.etudiant.last_name }} {{ paiement.etudiant.first_name }}</h3>
+                        <p>Matricule: {{ paiement.etudiant.matricule }}</p>
+                        <p>Paiement: {{ paiement.reference }}</p>
+                    </div>
+                </div>
+
+                <!-- Zone de grattage -->
+                {% if not deja_gratté %}
+                <div class="scratch-card">
+                    <canvas id="scratchCanvas" class="scratch-canvas"></canvas>
+                    <div class="instructions">
+                        <i class="fas fa-hand-pointer bounce"></i>
+                        <p>Grattez avec votre souris ou doigt</p>
+                        <small>Découvrez votre réduction !</small>
+                    </div>
+                    <div id="scratchResult" class="scratch-result">
+                        <div class="result-icon">
+                            <i class="fas fa-gift"></i>
+                        </div>
+                        <div class="result-percentage" id="resultPercentage">???%</div>
+                        <div class="result-message" id="resultMessage">Réduction à découvrir</div>
+                    </div>
+                </div>
+
+                <!-- Boutons d'action -->
+                <div class="actions">
+                    <button class="btn btn-primary" id="btnScratch">
+                        <i class="fas fa-gem"></i> Gratter maintenant
+                    </button>
+                    <button class="btn btn-secondary" id="btnAutoScratch">
+                        <i class="fas fa-magic"></i> Gratter automatiquement
+                    </button>
+                </div>
+                {% else %}
+                <!-- Résultat déjà obtenu -->
+                <div class="scratch-result revealed">
+                    <div class="result-icon">
+                        {% if reduction_percentage > 0 %}
+                            <i class="fas fa-trophy" style="color: #38a169;"></i>
+                        {% else %}
+                            <i class="fas fa-smile" style="color: #667eea;"></i>
+                        {% endif %}
+                    </div>
+                    <div class="result-percentage">
+                        {{ reduction_percentage }}%
+                    </div>
+                    <div class="result-message">
+                        {% if reduction_percentage > 0 %}
+                            Félicitations ! Vous avez obtenu {{ reduction_percentage }}% de réduction
+                        {% else %}
+                            Merci d'avoir participé !
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Informations montant -->
+                <div class="amount-info">
+                    <p>Montant initial: <strong>{{ montant_avant_reduction|floatformat:0 }} FCFA</strong></p>
+                    {% if deja_gratté %}
+                        <p>Réduction obtenue: <strong>{{ reduction_percentage }}%</strong></p>
+                        <p>Économie: <strong>{{ paiement.montant_reduction|floatformat:0 }} FCFA</strong></p>
+                        <p>Montant final: <strong>{{ paiement.montant_total|floatformat:0 }} FCFA</strong></p>
+                    {% endif %}
+                </div> 
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ScratchGame {
+            constructor() {
+                this.canvas = document.getElementById('scratchCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.isDrawing = false;
+                this.scratchedPercentage = 0;
+                this.totalPixels = 0;
+                this.gameFinished = false;
+                this.paiementId = {{ paiement.id }};
+                
+                this.initCanvas();
+                this.setupEvents();
+            }
+            
+            initCanvas() {
+                // Ajuster la taille du canvas
+                const card = document.querySelector('.scratch-card');
+                const rect = card.getBoundingClientRect();
+                
+                this.canvas.width = rect.width - 40;
+                this.canvas.height = rect.height - 40;
+                
+                // Dessiner le fond argenté
+                this.ctx.fillStyle = '#e9ecef';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Dessiner un motif de points
+                this.ctx.fillStyle = '#adb5bd';
+                const dotSize = 4;
+                const spacing = 20;
+                
+                for (let x = spacing; x < this.canvas.width; x += spacing) {
+                    for (let y = spacing; y < this.canvas.height; y += spacing) {
+                        this.ctx.beginPath();
+                        this.ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                }
+                
+                this.totalPixels = this.canvas.width * this.canvas.height;
+            }
+            
+            setupEvents() {
+                // Souris
+                this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
+                this.canvas.addEventListener('mousemove', (e) => this.draw(e));
+                this.canvas.addEventListener('mouseup', () => this.stopDrawing());
+                this.canvas.addEventListener('mouseleave', () => this.stopDrawing());
+                
+                // Tactile
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent('mousedown', {
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                    this.canvas.dispatchEvent(mouseEvent);
+                });
+                
+                this.canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent('mousemove', {
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                    this.canvas.dispatchEvent(mouseEvent);
+                });
+                
+                this.canvas.addEventListener('touchend', () => {
+                    const mouseEvent = new MouseEvent('mouseup', {});
+                    this.canvas.dispatchEvent(mouseEvent);
+                });
+                
+                // Boutons
+                document.getElementById('btnScratch')?.addEventListener('click', () => this.scratchNow());
+                document.getElementById('btnAutoScratch')?.addEventListener('click', () => this.autoScratch());
+            }
+            
+            getMousePos(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                return {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
+            }
+            
+            startDrawing(e) {
+                if (this.gameFinished) return;
+                this.isDrawing = true;
+                const pos = this.getMousePos(e);
+                this.lastX = pos.x;
+                this.lastY = pos.y;
+            }
+            
+            draw(e) {
+                if (!this.isDrawing || this.gameFinished) return;
+                
+                const pos = this.getMousePos(e);
+                const currentX = pos.x;
+                const currentY = pos.y;
+                
+                // Dessiner le trait
+                this.ctx.globalCompositeOperation = 'destination-out';
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.lastX, this.lastY);
+                this.ctx.lineTo(currentX, currentY);
+                this.ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
+                this.ctx.lineWidth = 40;
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+                this.ctx.stroke();
+                
+                // Mettre à jour la position
+                this.lastX = currentX;
+                this.lastY = currentY;
+                
+                // Vérifier le pourcentage gratté
+                this.checkScratchedArea();
+            }
+            
+            stopDrawing() {
+                this.isDrawing = false;
+            }
+            
+            checkScratchedArea() {
+                // Estimer la surface grattée
+                const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+                const pixels = imageData.data;
+                
+                let transparentCount = 0;
+                // Échantillonner 500 pixels
+                for (let i = 0; i < 500; i++) {
+                    const idx = Math.floor(Math.random() * (pixels.length / 4)) * 4;
+                    if (pixels[idx + 3] === 0) {
+                        transparentCount++;
+                    }
+                }
+                
+                this.scratchedPercentage = (transparentCount / 500) * 100;
+                
+                // Si plus de 40% est gratté, déclencher le résultat
+                if (this.scratchedPercentage > 40 && !this.gameFinished) {
+                    this.revealResult();
+                }
+            }
+            
+            scratchNow() {
+                if (this.gameFinished) return;
+                this.revealResult();
+            }
+            
+            autoScratch() {
+                if (this.gameFinished) return;
+                
+                // Animation de grattage automatique
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5;
+                    
+                    this.ctx.globalCompositeOperation = 'destination-out';
+                    this.ctx.beginPath();
+                    this.ctx.arc(
+                        this.canvas.width / 2,
+                        this.canvas.height / 2,
+                        progress,
+                        0,
+                        Math.PI * 2
+                    );
+                    this.ctx.fill();
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        this.revealResult();
+                    }
+                }, 50);
+            }
+            
+            async revealResult() {
+                if (this.gameFinished) return;
+                this.gameFinished = true;
+                
+                // Cacher les instructions
+                document.querySelector('.instructions').style.display = 'none';
+                
+                // Montrer la zone de résultat
+                const resultDiv = document.getElementById('scratchResult');
+                resultDiv.classList.add('revealed');
+                
+                // Désactiver les boutons
+                document.getElementById('btnScratch').disabled = true;
+                document.getElementById('btnAutoScratch').disabled = true;
+                
+                try {
+                    // Récupérer le token CSRF
+                    const csrfToken = this.getCSRFToken();
+                    
+                    // Envoyer la requête au serveur
+                    const response = await fetch(`/paiements/${this.paiementId}/gratter/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken || '',
+                        },
+                        body: JSON.stringify({})
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Afficher le résultat
+                        document.getElementById('resultPercentage').textContent = data.reduction_percentage + '%';
+                        document.getElementById('resultMessage').textContent = data.message;
+                        
+                        // Animation de confettis si réduction > 0
+                        if (data.reduction_percentage > 0) {
+                            this.createConfetti();
+                        }
+                        
+                        // Recharger la page après 3 secondes
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
+                    } else {
+                        alert('Erreur: ' + data.error);
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    alert('Erreur de connexion au serveur');
+                    window.location.reload();
+                }
+            }
+            
+            getCSRFToken() {
+                // Essayer plusieurs méthodes
+                const metaTag = document.querySelector('meta[name="csrf-token"]');
+                if (metaTag) return metaTag.getAttribute('content');
+                
+                const input = document.querySelector('[name="csrfmiddlewaretoken"]');
+                if (input) return input.value;
+                
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    cookie = cookie.trim();
+                    if (cookie.startsWith('csrftoken=')) {
+                        return cookie.substring('csrftoken='.length);
+                    }
+                }
+                
+                return null;
+            }
+            
+            createConfetti() {
+                const colors = ['#667eea', '#764ba2', '#38a169', '#f6ad55', '#fc8181'];
+                
+                for (let i = 0; i < 100; i++) {
+                    setTimeout(() => {
+                        const confetti = document.createElement('div');
+                        confetti.className = 'confetti';
+                        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        confetti.style.left = Math.random() * 100 + 'vw';
+                        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                        confetti.style.width = Math.random() * 15 + 5 + 'px';
+                        confetti.style.height = confetti.style.width;
+                        
+                        // Animation
+                        const duration = Math.random() * 3 + 2;
+                        confetti.style.animation = `confetti-fall ${duration}s linear forwards`;
+                        
+                        document.body.appendChild(confetti);
+                        
+                        // Supprimer après animation
+                        setTimeout(() => {
+                            confetti.remove();
+                        }, duration * 1000);
+                    }, i * 20);
+                }
+            }
+        }
+        
+        // Initialiser le jeu quand la page est chargée
+        document.addEventListener('DOMContentLoaded', () => {
+            {% if not deja_gratté %}
+                new ScratchGame();
+            {% endif %}
+        });
+    </script>
+</body>
+</html>

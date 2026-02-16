@@ -1,0 +1,558 @@
+{% extends 'Utilisateurs/base.html' %}
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/Utilisateurs/inscription.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<header class="dashboard-header">
+    <div class="header-left">
+        <h1>Ajouter un étudiant</h1>
+        <p>Formulaire d'inscription</p>
+    </div>
+</header>
+<div class="main-content">
+    <!-- Formulaire d'inscription -->
+    <section class="register-section">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-user-plus"></i> Formulaire d'inscription</h3>
+                <span class="form-step">Étape 1/3</span>
+            </div>
+            
+            <div class="card-body">
+                <form id="studentForm" method="POST" action="{% url 'ajouter_etudiant' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Onglets de navigation -->
+                    <div class="form-tabs">
+                        <button type="button" class="form-tab active" data-tab="personal">
+                            <i class="fas fa-user"></i>
+                            <span>Informations personnelles</span>
+                        </button>
+                        <button type="button" class="form-tab" data-tab="academic">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>Informations académiques</span>
+                        </button>
+                        <button type="button" class="form-tab" data-tab="payment">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Détails de paiement</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Messages d'erreur -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Veuillez corriger les erreurs ci-dessous
+                        {{ messages.errors }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Étape 1: Informations personnelles -->
+                    <div class="form-step-content active" id="personal-tab">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="last_name">
+                                    <i class="fas fa-user-tag"></i> Nom *
+                                </label>
+                                <div class="input-with-icon">
+                                    <input type="text"
+                                        id="last_name"
+                                        name="last_name"
+                                        class="form-control {% if form.last_name.errors %}input-error{% endif %}"
+                                        placeholder="Ex: ANOMAN"
+                                        required 
+                                        value="{{ form.last_name.value|default:'' }}">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.last_name.errors %}
+                                <div class="error-message">
+                                    {{ form.last_name.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-hint">Nom de famille en majuscules</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="first_name">
+                                    <i class="fas fa-user"></i> Prénom(s) *
+                                </label>
+                                <div class="input-with-icon">
+                                    <input type="text"
+                                        id="first_name"
+                                        name="first_name"
+                                        class="form-control {% if form.first_name.errors %}input-error{% endif %}"
+                                        placeholder="Ex: CLOVIS"
+                                        required 
+                                        value="{{ form.first_name.value|default:'' }}">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.first_name.errors %}
+                                <div class="error-message">
+                                    {{ form.first_name.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-hint">Prénom complet</div>
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label for="email">
+                                    <i class="fas fa-envelope"></i> Adresse email *
+                                </label>
+                                <div class="input-with-icon">
+                                    <input type="email"
+                                        id="email"
+                                        name="email"
+                                        class="form-control {% if form.email.errors %}input-error{% endif %}"
+                                        placeholder="clovis.anoman@papel.com"
+                                        required 
+                                        value="{{ form.email.value|default:'' }}">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.email.errors %}
+                                <div class="error-message">
+                                    {{ form.email.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-hint">Utilisé pour les notifications et le suivi</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="contact">
+                                    <i class="fas fa-phone"></i> Téléphone principal *
+                                </label>
+                                <div class="input-with-icon">
+                                    <input type="tel" 
+                                        id="contact" 
+                                        name="contact" 
+                                        class="form-control {% if form.contact.errors %}input-error{% endif %}"
+                                        placeholder="Ex: 05 04 13 86 87"
+                                        required
+                                        value="{{ form.contact.value|default:'' }}">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.contact.errors %}
+                                <div class="error-message">
+                                    {{ form.contact.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Étape 2: Informations académiques -->
+                    <div class="form-step-content" id="academic-tab">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="matricule">
+                                    <i class="fas fa-id-card"></i> Matricule *
+                                </label>
+                                <div class="input-with-icon">
+                                    <input type="text" 
+                                        id="matricule" 
+                                        name="matricule" 
+                                        class="form-control {% if form.matricule.errors %}input-error{% endif %}"
+                                        required
+                                        value="{{ form.matricule.value|default:'' }}" 
+                                        placeholder="26GBATNIWQ0305">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.matricule.errors %}
+                                <div class="error-message">
+                                    {{ form.matricule.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="filiere">
+                                    <i class="fas fa-book"></i> Filière *
+                                </label>
+                                <div class="input-with-icon">
+                                    <select id="filiere" name="filiere" class="{% if form.filiere.errors %}input-error{% endif %}" required>
+                                        <option value="">Sélectionnez une filière</option>
+                                        {% for filiere in filieres %}
+                                            <option value="{{ filiere.id }}" 
+                                                {% if form.filiere.value == filiere.id|stringformat:"s" %}selected{% endif %}>
+                                                {{ filiere.nom }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.filiere.errors %}
+                                <div class="error-message">
+                                    {{ form.filiere.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="niveau">
+                                    <i class="fas fa-graduation-cap"></i> Niveau *
+                                </label>
+                                <div class="input-with-icon">
+                                    <select id="niveau" name="niveau" class="{% if form.niveau.errors %}input-error{% endif %}" required>
+                                        <option value="">Sélectionnez...</option>
+                                        {% for niveau in niveaux %}
+                                            <option value="{{ niveau.id }}"
+                                                {% if form.niveau.value == niveau.id|stringformat:"s" %}selected{% endif %}>
+                                                {{ niveau.niveau }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.niveau.errors %}
+                                <div class="error-message">
+                                    {{ form.niveau.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="annee">
+                                    <i class="fas fa-calendar"></i> Année académique *
+                                </label>
+                                <div class="input-with-icon">
+                                    <select id="annee" name="annee_academique" class="{% if form.annee_academique.errors %}input-error{% endif %}" required>
+                                        <option value="">Sélectionnez...</option>
+                                        {% for annee in annee_academiques %}
+                                            <option value="{{ annee.id }}"
+                                                {% if form.annee_academique.value == annee.id|stringformat:"s" %}selected{% endif %}>
+                                                {{ annee.annee_academique }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.annee_academique.errors %}
+                                <div class="error-message">
+                                    {{ form.annee_academique.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label for="theme_memoire">
+                                    <i class="fas fa-file-alt"></i> Thème du mémoire *
+                                </label>
+                                <div class="input-with-icon">
+                                    <textarea id="theme_memoire" name="theme_memoire" rows="3" required 
+                                              class="{% if form.theme_memoire.errors %}input-error{% endif %}"
+                                              placeholder="Ex: Intelligence artificielle et transformation digitale dans les entreprises sénégalaises...">{{ form.theme_memoire.value|default:'' }}</textarea>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.theme_memoire.errors %}
+                                <div class="error-message">
+                                    {{ form.theme_memoire.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-hint">Décrivez brièvement le thème du mémoire (max 500 caractères)</div>
+                                <div class="char-counter">
+                                    <span id="themeCharCount">0</span>/500 caractères
+                                </div>
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label for="support_pdf">
+                                    <i class="fas fa-file-pdf"></i> Support PDF *
+                                </label>
+                                <div class="input-with-icon file-input">
+                                    <input type="file" 
+                                           id="support_pdf" 
+                                           name="support_pdf" 
+                                           class="form-control-file {% if form.support_pdf.errors %}input-error{% endif %}"
+                                           accept=".pdf,.doc,.docx,.word"
+                                           required>
+                                    <div class="file-preview" id="pdfPreview">
+                                        <span>Aucun fichier sélectionné</span>
+                                    </div>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.support_pdf.errors %}
+                                <div class="error-message">
+                                    {{ form.support_pdf.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-hint">Taille maximale : 10MB. Format accepté : PDF, DOC, DOCX, WORD uniquement</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Étape 3: Détails de paiement -->
+                    <div class="form-step-content" id="payment-tab">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="source">
+                                    <i class="fas fa-hand-holding-usd"></i> Source de paiement *
+                                </label>
+                                <div class="input-with-icon">
+                                    <select id="source" name="source" required>
+                                        <option value="">Sélectionnez...</option>
+                                        <option value="ESPECE" {% if form.source.value == "ESPECE" %}selected{% endif %}>Espèce</option>
+                                        <option value="MOBILE_MONEY" {% if form.source.value == "MOBILE_MONEY" %}selected{% endif %}>Mobile Money</option>
+                                        <option value="WAVE_MONEY" {% if form.source.value == "WAVE_MONEY" %}selected{% endif %}>Wave Money</option>
+                                    </select>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="frais_impression">
+                                    <i class="fas fa-print"></i> Frais d'impression *
+                                </label>
+                                <div class="input-with-icon">
+                                    <div class="currency-input">
+                                        <input type="number" 
+                                            id="frais_impression" 
+                                            name="frais_impression" 
+                                            class="form-control"
+                                            min="0" 
+                                            step="500" 
+                                            value="{{ form.frais_impression.value|default:'0' }}" 
+                                            required>
+                                        <span class="currency-symbol">FCFA</span>
+                                    </div>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                <div class="form-hint">Coût d'impression du mémoire</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="service_annexe">
+                                    <i class="fas fa-tools"></i> Service annexe
+                                </label>
+                                <div class="input-with-icon checkbox-wrapper">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" 
+                                               id="service_annexe" 
+                                               name="service_annexe" 
+                                               value="1"
+                                               {% if form.service_annexe.value %}checked{% endif %}>
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-text">Activer le service annexe</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" id="annexe_type_group" style="display: none;">
+                                <label for="intitule_annexes">
+                                    <i class="fas fa-file-signature"></i> Type de service annexe
+                                </label>
+                                <div class="input-with-icon">
+                                    <select id="intitule_annexes" name="intitule_annexes">
+                                        <option value="">Sélectionnez un service</option>
+                                        <option value="PAGE_DE_GARDE" {% if form.intitule_annexes.value == "PAGE_DE_GARDE" %}selected{% endif %}>Page de garde (1,000 FCFA)</option>
+                                        <option value="MISE_EN_FORME" {% if form.intitule_annexes.value == "MISE_EN_FORME" %}selected{% endif %}>Mise en forme (4,000 FCFA)</option>
+                                        <option value="COMPLET" {% if form.intitule_annexes.value == "COMPLET" %}selected{% endif %}>Complet (5,000 FCFA)</option>
+                                    </select>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                <div class="form-hint">Les frais seront calculés automatiquement</div>
+                            </div>
+                            
+                            <div class="form-group" id="frais_annexe_group" style="display: none;">
+                                <label for="frais_annexe_display">
+                                    <i class="fas fa-money-bill"></i> Frais annexe
+                                </label>
+                                <div class="input-with-icon">
+                                    <div class="currency-input">
+                                        <input type="number" 
+                                               id="frais_annexe_display" 
+                                               name="frais_annexe_display" 
+                                               readonly
+                                               value="0">
+                                        <span class="currency-symbol">FCFA</span>
+                                    </div>
+                                    <input type="hidden" id="frais_annexe" name="frais_annexe" value="0">
+                                    <div class="input-focus-line"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="jeu_reduction">
+                                    <i class="fas fa-tags"></i> Jeu de réduction
+                                </label>
+                                <div class="input-with-icon checkbox-wrapper">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" 
+                                               id="jeu_reduction" 
+                                               name="jeu_reduction" 
+                                               value="1"
+                                               {% if form.jeu_reduction.value %}checked{% endif %}>
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-text">Appliquer une réduction allant jusqu'a 30%</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <input type="hidden" id="montant_total" name="montant_total" value="0">
+                        </div>
+
+                        <div class="form-group">
+                                <label for="commission">
+                                    <i class="fas fa-percentage"></i> Commission *
+                                </label>
+                                <div class="input-with-icon">
+                                    <div class="currency-input">
+                                        <input type="number" 
+                                            id="commission" 
+                                            name="commission"
+                                            class="form-control"
+                                            min="0" 
+                                            step="500" 
+                                            value="{{ form.commission.value|default:'0' }}" 
+                                            required>
+                                        <span class="currency-symbol">FCFA</span>
+                                    </div>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                <div class="form-hint">Commission sous impression</div>
+                            </div>
+                        
+                        <!-- Récapitulatif des frais -->
+                        <div class="payment-summary">
+                            <h4><i class="fas fa-file-invoice-dollar"></i> Récapitulatif des frais</h4>
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <span class="label">Frais d'impression:</span>
+                                    <span class="value" id="summary_frais_impression">0 FCFA</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Commission:</span>
+                                    <span class="value" id="summary_commission">0 FCFA</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Services annexes:</span>
+                                    <span class="value" id="summary_annexe">0 FCFA</span>
+                                </div>
+                                <div class="summary-item total">
+                                    <span class="label">Total à payer:</span>
+                                    <span class="value" id="summary_total">0 FCFA</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation entre les étapes -->
+                    <div class="form-navigation">
+                        <button type="button" class="btn-secondary" id="prevBtn">
+                            <i class="fas fa-arrow-left"></i> Précédent
+                        </button>
+                        
+                        <div class="step-indicator">
+                            <span class="step active" data-step="1"></span>
+                            <span class="step" data-step="2"></span>
+                            <span class="step" data-step="3"></span>
+                        </div>
+                        
+                        <button type="button" class="btn-primary" id="nextBtn">
+                            Suivant <i class="fas fa-arrow-right"></i>
+                        </button>
+                        
+                        <!-- CORRECTION: Assurez-vous que les boutons sont à l'intérieur du form et ont les bons names -->
+                        <div class="submit-options" id="submitOptions" style="display: none;">
+                            <button type="submit" class="btn-secondary" name="enregistrer_sans_imprimer">
+                                <i class="fas fa-save"></i> Enregistrer seulement
+                            </button>
+                            <button type="submit" class="btn-success" name="imprimer_reçu">
+                                <i class="fas fa-print"></i> Enregistrer & Imprimer le reçu
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Panneau latéral avec résumé -->
+        <div class="preview-card">
+            <!-- Résumé rapide -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-file-invoice"></i> Résumé de la transaction</h3>
+                </div>
+                <div class="card-body">
+                    <div class="transaction-summary">
+                        <div class="summary-section">
+                            <h5><i class="fas fa-user"></i> Étudiant</h5>
+                            <div class="student-summary-info">
+                                <div class="student-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="student-details">
+                                    <strong id="previewName">Nom Prénom</strong>
+                                    <small id="previewId">Matricule: Non défini</small>
+                                    <small id="previewFiliere">Filière: Non définie</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-section">
+                            <h5><i class="fas fa-money-bill-wave"></i> Paiement</h5>
+                            <div class="payment-details">
+                                <div class="payment-item">
+                                    <span>Mode:</span>
+                                    <span id="previewSource">-</span>
+                                </div>
+                                <div class="payment-item">
+                                    <span>Statut:</span>
+                                    <span class="status-badge pending">En attente</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-section">
+                            <h5><i class="fas fa-calculator"></i> Montants</h5>
+                            <div class="amount-details">
+                                <div class="amount-item">
+                                    <span>Impression:</span>
+                                    <span id="previewImpression">0 FCFA</span>
+                                </div>
+                                <div class="amount-item">
+                                    <span>Commission:</span>
+                                    <span id="previewCommission">0 FCFA</span>
+                                </div>
+                                <div class="amount-item">
+                                    <span>Services:</span>
+                                    <span id="previewServices">0 FCFA</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistiques rapides -->
+            <div class="quick-info">
+                <div class="info-item">
+                    <i class="fas fa-users"></i>
+                    <div>
+                        <span class="number">156</span>
+                        <span class="label">Étudiants</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-money-bill"></i>
+                    <div>
+                        <span class="number">245,500</span>
+                        <span class="label">FCFA aujourd'hui</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-percentage"></i>
+                    <div>
+                        <span class="number">15%</span>
+                        <span class="label">Commission moyenne</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Scripts -->
+<script src="{% static 'js/Utilisateurs/dashboard.js' %}"></script>
+<script src="{% static 'js/Utilisateurs/etudiant_form.js' %}"></script>
+{% endblock %}
