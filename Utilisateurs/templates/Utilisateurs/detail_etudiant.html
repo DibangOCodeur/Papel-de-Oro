@@ -139,6 +139,14 @@
                             <span class="info-label">Année académique</span>
                             <span class="info-value">{{ etudiant.annee_academique.annee_academique }}</span>
                         </div>
+                        <div class="info-item">
+                            <span class="info-label">Parrain</span>
+                            {% if etudiant.parrain %}
+                                <span class="info-value"> <strong>{{ etudiant.parrain.last_name }} {{ etudiant.parrain.first_name }}</strong></span>
+                            {% else %}
+                                <span class="info-value"> <strong>Dibang'O</strong></span>
+                            {% endif %}
+                        </div>
                         <div class="info-item full-width">
                             <span class="info-label">Thème du mémoire</span>
                             <span class="info-value">{{ etudiant.theme_memoire|default:"Non renseigné" }}</span>

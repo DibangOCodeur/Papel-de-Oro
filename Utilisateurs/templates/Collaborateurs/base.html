@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>{% block title %}DbgMemo Mobile{% endblock %}</title>
+
+    <!-- Polices & icônes -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- CSS de base -->
+    <link rel="stylesheet" href="{% static 'css/Utilisateurs/connexion.css' %}">
+    <link rel="stylesheet" href="{% static 'css/Collaborateurs/dash.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="dark-mode">
+
+    <!-- Fond animé -->
+    <div class="bg-animation">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
+        <div class="circle circle-4"></div>
+        <div class="circle circle-5"></div>
+    </div>
+
+    <div class="dashboard-container">
+        
+        <!-- Bouton thème -->
+        <button class="theme-toggle" id="themeToggle" title="Changer le thème">
+            <i class="fas fa-moon"></i>
+            <i class="fas fa-sun"></i>
+            <span class="theme-ball"></span>
+        </button>
+        
+        <!-- ==================== CONTENU PRINCIPAL ==================== -->
+        <main class="main-content">
+            
+            <!-- Header mobile -->
+            <div class="mobile-header">
+                <div class="logo-container">
+                    <img src="{% static 'images/logo.png' %}" alt="DbgMemo" class="logo-img">
+                    <div class="logo-text">
+                        <span class="logo-dbg">Dbg</span>
+                        <span class="logo-memo">Memo</span>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <!-- Date dynamique -->
+
+                    
+                    <div class="user-badge-mini">
+                        <div class="user-avatar-mini">
+                            {{ user.first_name|default:collaborateur.first_name|first|upper }}
+                        </div>
+                        <div class="user-status-indicator"></div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- BLOC CONTENU DYNAMIQUE -->
+            {% block content %}
+            <!-- Le contenu spécifique de chaque page sera injecté ici -->
+            {% endblock %}
+
+            <!-- Footer -->
+            <footer class="dashboard-footer">
+                <p>© 2026 DbgMind's - Tous droits réservés</p>
+                <p class="small">Service Impression Mémoires</p>
+            </footer>
+
+        </main>
+
+    </div><!-- .dashboard-container -->
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="bottom-nav-item active" data-menu="accueil">
+            <i class="fas fa-home"></i>
+            <span>Accueil</span>
+        </button>
+        <button class="bottom-nav-item" data-menu="etudiants">
+            <i class="fas fa-users"></i>
+            <span>Filleuls</span>
+            <em class="bottom-nav-badge" id="etudiantsBadge" style="display: none;">0</em>
+        </button>
+        <button class="bottom-nav-item" data-menu="memoires">
+            <i class="fas fa-file-pdf"></i>
+            <span>Mémoires</span>
+            <em class="bottom-nav-badge" id="memoiresBadge" style="display: none;">0</em>
+        </button>
+        <button class="bottom-nav-item" data-menu="paiements">
+            <i class="fas fa-money-bill-wave"></i>
+            <span>Paiements</span>
+        </button>
+        <button class="bottom-nav-item" data-menu="plus">
+            <i class="fas fa-ellipsis-h"></i>
+            <span>Plus</span>
+        </button>
+    </nav>
+
+    <!-- Menu contextuel -->
+    <div class="context-menu-backdrop" id="contextMenuBackdrop"></div>
+    <div class="context-menu" id="contextMenu"></div>
+
+    <!-- Chart.js (optionnel, chargé seulement si nécessaire) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+    <!-- Configuration JavaScript globale -->
+    <script>
+        // Variables globales qui seront utilisées par dashboard.js
+        window.userData = {{ user_data|safe|default:'{}' }};
+        window.chartData = {{ chart_data|safe|default:'{}' }};
+        window.appUrls = {{ app_urls|safe|default:'{}' }};
+        
+        // Structure des menus avec URLs
+        window.menuItems = {
+            etudiants: [
+                { icon: 'fa-search', label: 'Rechercher un étudiant', url: window.appUrls.rechercheEtudiant || '#' },
+                { icon: 'fa-user-graduate', label: 'Mes Filleul(e)s', badge: window.userData.nbEtudiants || 0, url: window.appUrls.listeFilleuls || '#' }
+            ],
+            memoires: [
+                { icon: 'fa-clock', label: 'En attente', url: window.appUrls.memoiresAttente || '#' },
+                { icon: 'fa-check-circle', label: 'Imprimés', url: "{% url 'liste_memoires_imprimes' %}" },
+                { icon: 'fa-truck', label: 'Livrés', url: window.appUrls.memoiresLivres || '#' }
+            ],
+            paiements: [
+                { icon: 'fa-cash-register', label: 'Encaisser un paiement', url: window.appUrls.paiementsEncaisser || '#' },
+                { icon: 'fa-calendar-day', label: 'Paiements du jour', url: window.appUrls.paiementsJour || '#' },
+                { icon: 'fa-history', label: 'Historique', url: window.appUrls.paiementsHistorique || '#' }
+            ],
+            plus: [
+                { icon: 'fa-chart-line', label: 'Statistiques', url: window.appUrls.statistiques || '#' },
+                { icon: 'fa-cog', label: 'Paramètres', url: window.appUrls.parametres || '#' },
+                { icon: 'fa-question-circle', label: 'Aide', url: window.appUrls.aide || '#' },
+                { icon: 'fa-sign-out-alt', label: 'Déconnexion', url: '{% url "deconnexion" %}' }
+            ],
+            accueil: []
+        };
+    </script>
+
+    <!-- JavaScript principal -->
+    <script src="{% static 'js/Collaborateurs/dashboard.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+    
+    <script>
+        // Initialisation spécifique à la page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mise à jour des badges
+            if (window.userData) {
+                const etudiantsBadge = document.getElementById('etudiantsBadge');
+                const memoiresBadge = document.getElementById('memoiresBadge');
+                
+                if (etudiantsBadge && window.userData.nbNouveauxEtudiants > 0) {
+                    etudiantsBadge.textContent = window.userData.nbNouveauxEtudiants;
+                    etudiantsBadge.style.display = 'flex';
+                }
+                
+                if (memoiresBadge && window.userData.nbMemoiresEncours > 0) {
+                    memoiresBadge.textContent = window.userData.nbMemoiresEncours;
+                    memoiresBadge.style.display = 'flex';
+                }
+            }
+            
+            // Mise à jour de la date
+            const currentDateEl = document.getElementById('currentDate');
+            if (currentDateEl) {
+                const now = new Date();
+                const options = { weekday: 'short', day: 'numeric', month: 'short' };
+                currentDateEl.textContent = now.toLocaleDateString('fr-FR', options);
+            }
+        });
+    </script>
+</body>
+</html>

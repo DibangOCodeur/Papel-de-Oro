@@ -512,8 +512,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const impressionPreview = document.getElementById('previewImpression');
         const commissionPreview = document.getElementById('previewCommission');
         const servicesPreview = document.getElementById('previewServices');
-        const reductionPreview = document.getElementById('previewReduction');
-        const totalPreview = document.getElementById('previewTotal');
         
         if (impressionPreview) impressionPreview.textContent = formatCurrency(fraisImpression);
         if (commissionPreview) commissionPreview.textContent = formatCurrency(commission);

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Dashboard Collaborateur - DbgMemo Mobile</title>
+
+    <!-- Polices & icônes -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- CSS Mobile -->
+    <link rel="stylesheet" href="{% static 'css/Utilisateurs/connexion.css' %}">
+    <link rel="stylesheet" href="{% static 'css/Collaborateurs/dash.css' %}">
+</head>
+<body class="dark-mode">
+
+    <!-- Fond animé amélioré -->
+    <div class="bg-animation">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
+        <div class="circle circle-4"></div>
+        <div class="circle circle-5"></div>
+    </div>
+
+    <div class="dashboard-container">
+        
+        <!-- Bouton thème -->
+        <button class="theme-toggle" id="themeToggle" title="Changer le thème">
+            <i class="fas fa-moon"></i>
+            <i class="fas fa-sun"></i>
+            <span class="theme-ball"></span>
+        </button>
+        
+        <!-- ==================== CONTENU PRINCIPAL ==================== -->
+        <main class="main-content">
+
+            <!-- Header avec logo et infos utilisateur -->
+            <div class="mobile-header">
+                <div class="logo-container">
+                    <img src="{% static 'images/logo.png' %}" alt="DbgMemo" class="logo-img">
+                    <div class="logo-text">
+                        <span class="logo-dbg">Dbg</span>
+                        <span class="logo-memo">Memo</span>
+                    </div>
+                </div>
+                
+                <div class="user-badge-mini">
+                    <div class="user-avatar-mini">
+                        {{ user.first_name|default:collaborateur.first_name|first|upper }}
+                    </div>
+                    <div class="user-status-indicator"></div>
+                </div>
+            </div>
+
+            <!-- Section de bienvenue améliorée -->
+            <div class="welcome-section">
+                <div class="welcome-text">
+                    <h1>Bonjour, <span class="highlight">{{ user.first_name|default:collaborateur.first_name }}</span></h1>
+                    <p>Tableau de bord collaborateur</p>
+                </div>
+                <div class="matricule-badge">
+                    <i class="fas fa-id-card"></i>
+                    <span>{{ collaborateur.matricule|default:"DBG001" }}</span>
+                </div>
+            </div>
+
+            <!-- Statistiques améliorées avec effets -->
+            <section class="dashboard-stats">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Étudiants</span>
+                        <div class="stat-value-group">
+                            <span class="stat-number">{{ nb_etudiant }}</span>
+                            <span class="stat-trend positive">
+                                <i class="fas fa-arrow-up"></i> +{{ nb_nouveaux_etudiants }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-card-success">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Traités</span>
+                        <div class="stat-value-group">
+                            <span class="stat-number">{{ nb_memoire_traiter }}</span>
+                            <span class="stat-detail">{{ nb_memoire_termine }} finis</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-card-warning">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">En cours</span>
+                        <div class="stat-value-group">
+                            <span class="stat-number">{{ nb_memoire_encours }}</span>
+                            <span class="stat-detail">{{ nb_memoire_livre }} livrés</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-card-gradient">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Solde</span>
+                        <div class="stat-value-group">
+                            <span class="stat-number">{{ mon_solde|floatformat:0 }}</span>
+                            <span class="stat-currency">FCFA</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Graphiques avec conteneurs améliorés -->
+            <section class="charts-section">
+                <div class="chart-card glass-effect">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-line" style="color: #6a11cb;"></i> Évolution mensuelle</h3>
+                        <select class="chart-period" id="evolutionPeriod">
+                            <option value="6">6 mois</option>
+                            <option value="12">12 mois</option>
+                        </select>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="evolutionChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card glass-effect">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-pie" style="color: #f39c12;"></i> Répartition par filière</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="filiereChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Mon Activité améliorée -->
+            <div class="activity-summary-card glass-effect">
+                <div class="summary-header">
+                    <h3><i class="fas fa-chart-simple"></i> Mon activité</h3>
+                    <span class="taux-badge">{{ taux_conversion }}%</span>
+                </div>
+                
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="summary-icon"><i class="fas fa-folder-open"></i></span>
+                        <div class="summary-info">
+                            <span class="summary-value">{{ nb_memoire_traiter }}</span>
+                            <span class="summary-label">Dossiers traités</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span class="summary-icon"><i class="fas fa-user-graduate"></i></span>
+                        <div class="summary-info">
+                            <span class="summary-value">{{ nb_etudiant }}</span>
+                            <span class="summary-label">Étudiants</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span class="summary-icon"><i class="fas fa-money-bill-wave"></i></span>
+                        <div class="summary-info">
+                            <span class="summary-value">{{ mon_solde|floatformat:0 }} FCFA</span>
+                            <span class="summary-label">Commission</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span class="summary-icon"><i class="fas fa-percent"></i></span>
+                        <div class="summary-info">
+                            <span class="summary-value">{{ commission_moyenne|floatformat:0 }} FCFA</span>
+                            <span class="summary-label">Moy/étudiant</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top étudiants amélioré -->
+            <section class="dashboard-content">
+                <div class="card glass-effect">
+                    <div class="card-header">
+                        <h3><i class="fas fa-star" style="color: #f39c12;"></i> Top étudiants</h3>
+                        <a href="{% url 'liste_filleuls' %}" class="view-all">Voir tout <i class="fas fa-chevron-right"></i></a>
+                    </div>
+                    <div class="card-body">
+                        <div class="top-students-list">
+                            {% for etudiant in top_etudiants %}
+                            <div class="top-student-item">
+                                <div class="student-rank rank-{{ forloop.counter }}">{{ forloop.counter }}</div>
+                                <div class="student-avatar">{{ etudiant.initiales|default:"ET" }}</div>
+                                <div class="student-info">
+                                    <strong>{{ etudiant.nom }}</strong>
+                                    <small>{{ etudiant.filiere }}</small>
+                                </div>
+                                <div class="student-stats">
+                                    <span class="student-paiement">
+                                        {{ etudiant.total_commission|floatformat:0 }} FCFA
+                                    </span>
+                                    <span class="student-status {{ etudiant.statut_dossier|lower|cut:' ' }}">{{ etudiant.statut_dossier }}</span>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="empty-state">
+                                <i class="fas fa-users"></i>
+                                <p>Aucun étudiant pour le moment</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card glass-effect">
+                    <div class="card-header">
+                        <h3><i class="fas fa-clock-rotate-left" style="color: #3498db;"></i> Dossiers récents</h3>
+                        <a href="#" class="view-all">Voir tout <i class="fas fa-chevron-right"></i></a>
+                    </div>
+                    <div class="card-body">
+                        <div class="recent-orders">
+                            {% for dossier in dossiers_recents %}
+                            <div class="order-item">
+                                <div class="order-avatar">{{ dossier.initiales|default:"ET" }}</div>
+                                <div class="order-info">
+                                    <strong>{{ dossier.etudiant }}</strong>
+                                    <small><i class="far fa-clock"></i> {{ dossier.date }}</small>
+                                </div>
+                                <span class="order-status
+                                    {% if dossier.statut == 'Terminé' %}status-completed
+                                    {% elif dossier.statut == 'Livré' %}status-delivered
+                                    {% else %}status-pending{% endif %}">
+                                    {{ dossier.statut }}
+                                </span>
+                            </div>
+                            {% empty %}
+                            <div class="empty-state">
+                                <i class="fas fa-file-pdf"></i>
+                                <p>Aucun dossier récent</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card glass-effect">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-bar" style="color: #27ae60;"></i> Stats par filière</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="filiere-stats">
+                            {% for filiere in stats_par_filiere|slice:":5" %}
+                            <div class="filiere-stat-item">
+                                <div class="filiere-info">
+                                    <span class="filiere-name">{{ filiere.nom }}</span>
+                                    <span class="filiere-count">{{ filiere.nb_etudiants }} étud.</span>
+                                </div>
+                                <div class="filiere-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: {% widthratio filiere.nb_etudiants nb_etudiant 100 %}%;"></div>
+                                    </div>
+                                </div>
+                                <div class="filiere-commission">
+                                    <small><i class="fas fa-coins"></i> {{ filiere.commission|floatformat:0 }} FCFA</small>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="empty-state">
+                                <i class="fas fa-chart-bar"></i>
+                                <p>Aucune donnée disponible</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card glass-effect">
+                    <div class="card-header">
+                        <h3><i class="fas fa-bell" style="color: #e74c3c;"></i> Activités récentes</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="activity-timeline">
+                            {% for activite in activites %}
+                            <div class="timeline-item">
+                                <div class="timeline-icon">
+                                    <i class="fas {{ activite.icon }}"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <p>{{ activite.message|safe }}</p>
+                                    <small><i class="far fa-clock"></i> {{ activite.temps }}</small>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="empty-state">
+                                <i class="fas fa-history"></i>
+                                <p>Aucune activité récente</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if taches_prioritaires %}
+                <div class="card urgent-card glass-effect">
+                    <div class="card-header">
+                        <h3><i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i> Tâches prioritaires</h3>
+                    </div>
+                    <div class="card-body">
+                        {% for tache in taches_prioritaires %}
+                        <div class="task-item {% if tache.urgent %}urgent{% endif %}">
+                            <div class="task-content">
+                                <div class="task-title">{{ tache.titre }}</div>
+                                <div class="task-meta">
+                                    <i class="fas fa-clock"></i> {{ tache.echeance }}
+                                </div>
+                            </div>
+                            <button class="task-action" title="Marquer comme fait">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+
+            <!-- Footer -->
+            <footer class="dashboard-footer">
+                <p>© 2026 DbgMind's - Tous droits réservés</p>
+                <p class="small">Service Impression Mémoires</p>
+            </footer>
+
+        </main>
+
+    </div><!-- .dashboard-container -->
+
+    <!-- Bottom Navigation améliorée -->
+    <nav class="bottom-nav">
+        <button class="bottom-nav-item active" data-menu="accueil">
+            <i class="fas fa-home"></i>
+            <span>Accueil</span>
+        </button>
+        <button class="bottom-nav-item" data-menu="etudiants">
+            <i class="fas fa-users"></i>
+            <span>Filleuls</span>
+            {% if nb_nouveaux_etudiants > 0 %}
+            <em class="bottom-nav-badge">{{ nb_nouveaux_etudiants }}</em>
+            {% endif %}
+        </button>
+        <button class="bottom-nav-item" data-menu="memoires">
+            <i class="fas fa-file-pdf"></i>
+            <span>Mémoires</span>
+            {% if nb_memoire_encours > 0 %}
+            <em class="bottom-nav-badge">{{ nb_memoire_encours }}</em>
+            {% endif %}
+        </button>
+        <button class="bottom-nav-item" data-menu="paiements">
+            <i class="fas fa-money-bill-wave"></i>
+            <span>Paiements</span>
+        </button>
+        <button class="bottom-nav-item" data-menu="plus">
+            <i class="fas fa-ellipsis-h"></i>
+            <span>Plus</span>
+        </button>
+    </nav>
+
+    <!-- Menu contextuel -->
+    <div class="context-menu-backdrop" id="contextMenuBackdrop"></div>
+    <div class="context-menu" id="contextMenu"></div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+    <!-- Données et URLs (Solution 3) -->
+    <script>
+        // Données des graphiques
+        const chartData = {{ chart_data|safe }};
+        
+        // Données utilisateur
+        const userData = {
+            nbEtudiants: {{ nb_etudiant|default:0 }},
+            nbMemoiresEncours: {{ nb_memoire_encours|default:0 }},
+            nbNouveauxEtudiants: {{ nb_nouveaux_etudiants|default:0 }}
+        };
+        
+        // URLs des différentes pages
+        const appUrls = {
+            // Accueil
+            accueil: "{% url 'dashboard_collaborateur' %}",
+            
+            // Étudiants / Filleuls
+            listeFilleuls: "{% url 'liste_filleuls' %}",
+            rechercheEtudiant: "#",
+            dossiersEncours: "#",
+            nouveauxInscrits: "#",
+            
+            // Mémoires
+            memoiresAImprimer: "#",
+            memoiresAttente: "#",
+            memoiresTermines: "#",
+            memoiresLivres: "#",
+            
+            // Paiements
+            paiementsEncaisser: "#",
+            paiementsJour: "#",
+            paiementsRecus: "#",
+            paiementsHistorique: "#",
+            
+            // Plus
+            statistiques: "#",
+            fileImpression: "#",
+            parametres: "#",
+            aide: "#",
+            deconnexion: "#"
+        };
+        
+        // Créer menuItems avec les URLs
+        const menuItems = {
+            etudiants: [
+                { icon: 'fa-search', label: 'Rechercher un étudiant', url: appUrls.rechercheEtudiant },
+                { 
+                    icon: 'fa-user-graduate', 
+                    label: 'Mes Filleul(e)s', 
+                    badge: userData.nbEtudiants,
+                    url: appUrls.listeFilleuls
+                }
+            ],
+            memoires: [
+                { icon: 'fa-clock', label: 'En attente', url: appUrls.memoiresAttente },
+                { icon: 'fa-check-circle', label: 'Imprimés', url: appUrls.memoiresTermines },
+                { icon: 'fa-truck', label: 'Livrés', url: appUrls.memoiresLivres }
+            ],
+            paiements: [
+                { icon: 'fa-cash-register', label: 'Encaisser un paiement', url: appUrls.paiementsEncaisser },
+                { icon: 'fa-calendar-day', label: 'Paiements du jour', url: appUrls.paiementsJour },
+                { icon: 'fa-history', label: 'Historique', url: appUrls.paiementsHistorique }
+            ],
+            plus: [
+                { icon: 'fa-chart-line', label: 'Statistiques', url: appUrls.statistiques },
+                { icon: 'fa-cog', label: 'Paramètres', url: appUrls.parametres },
+                { icon: 'fa-question-circle', label: 'Aide', url: appUrls.aide },
+                { icon: 'fa-sign-out-alt', label: 'Déconnexion', url: '{% url "deconnexion" %}' }
+            ],
+            accueil: []
+        };
+        
+        // Rendre les données disponibles globalement
+        window.chartData = chartData;
+        window.userData = userData;
+        window.menuItems = menuItems;
+        window.appUrls = appUrls;
+    </script>
+
+    <!-- JS Mobile -->
+    <script src="{% static 'js/Collaborateurs/dashboard.js' %}"></script>
+
+</body>
+</html>

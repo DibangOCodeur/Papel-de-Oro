@@ -1,0 +1,262 @@
+{% extends "Utilisateurs/base.html" %}
+{% load static %}
+
+{% block title %}Inscription Collaborateur - DbgMemo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Collaborateurs/ins.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="register-section">
+    <!-- Panneau de gauche - Formulaire -->
+    <div class="form-panel">
+        <div class="form-header">
+            <h2>
+                <i class="fas fa-user-plus"></i>
+                Nouveau Collaborateur
+            </h2>
+            <span class="form-step">Étape 1/1</span>
+        </div>
+
+        <!-- Affichage des messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+                    {{ message|linebreaksbr }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" id="collaborateurForm" novalidate>
+            {% csrf_token %}
+
+            <!-- Grille du formulaire -->
+            <div class="form-grid">
+                <!-- Nom -->
+                <div class="form-group">
+                    <label for="{{ form.last_name.id_for_label }}">
+                        <i class="fas fa-user"></i>
+                        Nom <span class="required">*</span>
+                    </label>
+                    <div class="input-with-icon">
+                        {{ form.last_name }}
+                    </div>
+                    {% if form.last_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.last_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <!-- Prénom -->
+                <div class="form-group">
+                    <label for="{{ form.first_name.id_for_label }}">
+                        <i class="fas fa-user"></i>
+                        Prénom <span class="required">*</span>
+                    </label>
+                    <div class="input-with-icon">
+                        {{ form.first_name }}
+                    </div>
+                    {% if form.first_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.first_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <!-- Email -->
+                <div class="form-group full-width">
+                    <label for="{{ form.email.id_for_label }}">
+                        <i class="fas fa-envelope"></i>
+                        Email <span class="required">*</span>
+                    </label>
+                    <div class="input-with-icon">
+                        {{ form.email }}
+                    </div>
+                    {% if form.email.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.email.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <!-- Téléphone -->
+                <div class="form-group full-width">
+                    <label for="{{ form.contact.id_for_label }}">
+                        <i class="fas fa-phone"></i>
+                        Téléphone
+                    </label>
+                    <div class="input-with-icon">
+                        {{ form.contact }}
+                    </div>
+                    {% if form.contact.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.contact.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    <small class="form-hint">Format: 01 23 45 67 89 ou +225 01 23 45 67</small>
+                </div>
+            </div>
+
+            <!-- Section Mot de passe -->
+            <div class="password-section">
+                <h3>
+                    <i class="fas fa-lock"></i>
+                    Sécurité du compte
+                </h3>
+                
+                <div class="password-box">
+                    <div class="password-label">
+                        <i class="fas fa-key"></i>
+                        Mot de passe par défaut
+                    </div>
+                    <div class="password-value" id="defaultPassword">
+                        <span>@papel@</span>
+                        <button type="button" class="copy-btn" onclick="copyToClipboard('@papel@')" title="Copier le mot de passe">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="password-hint">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Ce mot de passe sera attribué automatiquement. Le collaborateur devra le changer lors de sa première connexion.</span>
+                </div>
+
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="info-content">
+                        <strong>Informations générées automatiquement :</strong>
+                        <ul style="margin-top: 10px; list-style: none; padding-left: 0;">
+                            <li><i class="fas fa-id-card"></i> Matricule : Généré automatiquement (ex: COL2026001)</li>
+                            <li><i class="fas fa-gift"></i> Code de parrainage : Généré automatiquement (ex: DBG7F3K9)</li>
+                            <li><i class="fas fa-calendar"></i> Date d'inscription : Aujourd'hui</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="form-actions">
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="fas fa-user-plus"></i>
+                    Créer le collaborateur
+                </button>
+                <button type="reset" class="btn-reset" id="resetBtn">
+                    <i class="fas fa-undo"></i>
+                    Réinitialiser
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Panneau de droite - Résumé et aperçu -->
+    <div class="summary-panel">
+        <div class="summary-header">
+            <h3>
+                <i class="fas fa-eye"></i>
+                Aperçu
+            </h3>
+            <span class="badge">Nouveau</span>
+        </div>
+
+        <!-- Aperçu du collaborateur -->
+        <div class="preview-card" id="previewCard">
+            <div class="preview-avatar">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <div class="preview-info">
+                <h4 id="previewName">NOM Prénom</h4>
+                <p id="previewEmail">email@exemple.com</p>
+                <p id="previewContact">Téléphone</p>
+            </div>
+        </div>
+
+        <!-- Informations générées -->
+        <div class="info-generated">
+            <h4>
+                <i class="fas fa-cogs"></i>
+                Informations qui seront générées
+            </h4>
+            
+            <div class="generated-item">
+                <span class="generated-label">Matricule :</span>
+                <span class="generated-value" id="previewMatricule">COL2026001</span>
+            </div>
+            
+            <div class="generated-item">
+                <span class="generated-label">Code parrainage :</span>
+                <span class="generated-value" id="previewCode">DBG7F3K9</span>
+            </div>
+            
+            <div class="generated-item">
+                <span class="generated-label">Date d'inscription :</span>
+                <span class="generated-value" id="previewDate">{{ today|date:"d/m/Y" }}</span>
+            </div>
+        </div>
+
+        <!-- Récapitulatif -->
+        <div class="quick-stats">
+            <h4>
+                <i class="fas fa-chart-pie"></i>
+                Statistiques rapides
+            </h4>
+            
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <i class="fas fa-users"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ total_collaborateurs|default:"0" }}</span>
+                        <span class="stat-label">Collaborateurs</span>
+                    </div>
+                </div>
+                
+                <div class="stat-item">
+                    <i class="fas fa-user-graduate"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ total_etudiants|default:"0" }}</span>
+                        <span class="stat-label">Étudiants</span>
+                    </div>
+                </div>
+                
+                <div class="stat-item">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ total_parrainages|default:"0" }}</span>
+                        <span class="stat-label">Parrainages</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rappel des règles -->
+        <div class="rules-card">
+            <h4>
+                <i class="fas fa-gavel"></i>
+                Règles importantes
+            </h4>
+            <ul>
+                <li><i class="fas fa-check-circle" style="color: var(--success);"></i> L'email doit être unique</li>
+                <li><i class="fas fa-check-circle" style="color: var(--success);"></i> Le matricule est généré automatiquement</li>
+                <li><i class="fas fa-check-circle" style="color: var(--success);"></i> Le code de parrainage est unique</li>
+                <li><i class="fas fa-exclamation-circle" style="color: var(--warning);"></i> Le mot de passe par défaut est @papel@</li>
+                <li><i class="fas fa-exclamation-circle" style="color: var(--warning);"></i> Le collaborateur pourra changer son mot de passe</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/Collaborateurs/inscription.js' %}"></script>
+{% endblock %}

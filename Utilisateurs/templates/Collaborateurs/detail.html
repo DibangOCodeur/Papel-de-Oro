@@ -1,0 +1,573 @@
+{% extends "Utilisateurs/base.html" %}
+{% load static %}
+
+{% block title %}Détail du collaborateur - {{ collaborateur.get_full_name }} - DbgMemo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Collaborateurs/detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+    <!-- En-tête avec breadcrumb -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <h1>Fiche Collaborateur</h1>
+            <div class="breadcrumb">
+                <a href="{% url 'liste_collaborateurs' %}">Liste des collaborateurs</a> 
+                <i class="fas fa-chevron-right"></i> 
+                <span>{{ collaborateur.last_name }} {{ collaborateur.first_name }}</span>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <button class="btn-secondary" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i> Retour
+            </button>
+            <a href="{% url 'update_collaborateur' collaborateur.id %}" class="btn-primary">
+                <i class="fas fa-edit"></i> Modifier
+            </a>
+            <a href="{% url 'recu_collaborateur' collaborateur.id %}" class="btn-receipt" target="_blank">
+                <i class="fas fa-file-pdf"></i> Reçu
+            </a>
+            <a href="{% url 'delete_collaborateur' collaborateur.id %}" class="btn-danger">
+                <i class="fas fa-trash-alt"></i> Supprimer
+            </a>
+        </div>
+    </header>
+    
+    <!-- Section principale -->
+    <div class="collaborateur-detail-container">
+        <!-- Carte profil -->
+        <div class="card profile-card">
+            <div class="card-body">
+                <div class="profile-header">
+                    <div class="profile-avatar-large">
+                        {% if collaborateur.avatar %}
+                            <img src="{{ collaborateur.avatar.url }}" alt="{{ collaborateur.get_full_name }}">
+                        {% else %}
+                            <div class="avatar-placeholder">
+                                {{ collaborateur.first_name|first|upper }}{{ collaborateur.last_name|first|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="profile-info">
+                        <h2>{{ collaborateur.last_name }} {{ collaborateur.first_name }}</h2>
+                        <div class="profile-metadata">
+                            <span class="matricule">{{ collaborateur.matricule }}</span>
+                            <span class="badge {% if collaborateur.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                {% if collaborateur.is_active %}Actif{% else %}Inactif{% endif %}
+                            </span>
+                            <span class="badge status-collaborateur">Collaborateur</span>
+                        </div>
+                        <p class="profile-email">{{ collaborateur.email }}</p>
+                    </div>
+                </div>
+                
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Inscrit depuis</span>
+                            <span class="stat-value">{{ collaborateur.date_inscription_collaborateur|date:"d/m/Y" }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Étudiants parrainés</span>
+                            <span class="stat-value">{{ collaborateur.nombre_etudiant|default:"0" }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Commission totale</span>
+                            <span class="stat-value">{{ collaborateur.montant_total_parrain|floatformat:0 }} FCFA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grille d'informations - 3 colonnes -->
+        <div class="info-grid-three-columns">
+            <!-- Informations personnelles -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-user-circle"></i> Informations personnelles</h3>
+                </div>
+                <div class="card-body">
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">Nom complet</span>
+                            <span class="info-value">{{ collaborateur.last_name }} {{ collaborateur.first_name }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Matricule</span>
+                            <span class="info-value">{{ collaborateur.matricule }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email</span>
+                            <span class="info-value">{{ collaborateur.email }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Téléphone</span>
+                            <span class="info-value">{{ collaborateur.contact|default:"Non renseigné" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Code parrainage</span>
+                            <span class="info-value code">{{ collaborateur.code_parainage|default:"Non généré" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Informations de compte -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-lock"></i> Informations de compte</h3>
+                </div>
+                <div class="card-body">
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">Statut</span>
+                            <span class="info-value">
+                                <span class="badge {% if collaborateur.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                    {% if collaborateur.is_active %}Actif{% else %}Inactif{% endif %}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Rôle</span>
+                            <span class="info-value">
+                                <span class="badge status-collaborateur">Collaborateur</span>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Date d'inscription</span>
+                            <span class="info-value">{{ collaborateur.date_inscription_collaborateur|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Dernière connexion</span>
+                            <span class="info-value">{{ collaborateur.last_login|date:"d/m/Y H:i"|default:"Jamais connecté" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Mot de passe défaut</span>
+                            <span class="info-value">
+                                <div class="password-display">
+                                    <span class="password-value">@papel@</span>
+                                    <button class="copy-password-btn" onclick="copyPassword('@papel@')" title="Copier le mot de passe">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistiques détaillées -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-bar"></i> Statistiques détaillées</h3>
+                </div>
+                <div class="card-body">
+                    <div class="finance-stats">
+                        <div class="finance-item total">
+                            <span class="finance-label">Commission totale</span>
+                            <span class="finance-value">{{ collaborateur.montant_total_parrain|floatformat:0 }} FCFA</span>
+                        </div>
+                        <div class="finance-grid-vertical">
+                            <div class="finance-item">
+                                <span class="finance-label">Étudiants parrainés</span>
+                                <span class="finance-value">{{ collaborateur.nombre_etudiant|default:"0" }}</span>
+                            </div>
+                            <div class="finance-item">
+                                <span class="finance-label">Commission moyenne</span>
+                                <span class="finance-value">
+                                    {% if collaborateur.nombre_etudiant > 0 %}
+                                        {% widthratio collaborateur.montant_total_parrain collaborateur.nombre_etudiant 1 %} FCFA
+                                    {% else %}
+                                        0 FCFA
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="finance-item">
+                                <span class="finance-label">Commission max</span>
+                                <span class="finance-value">
+                                    {% comment %} {% with max_commission=collaborateur.etudiant_set.all|dictsortre:"commission_parrain"|first %}
+                                        {{ max_commission.commission_parrain|floatformat:0|default:"0" }} FCFA
+                                    {% endwith %} {% endcomment %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions rapides (pleine largeur) -->
+        <div class="card actions-card">
+            <div class="card-header">
+                <h3><i class="fas fa-bolt"></i> Actions rapides</h3>
+            </div>
+            <div class="card-body">
+                <div class="quick-actions-grid">
+                    <button class="quick-action-btn" onclick="resetPassword('{{ collaborateur.id }}')">
+                        <i class="fas fa-key"></i>
+                        <span>Réinitialiser mot de passe</span>
+                    </button>
+                    
+                    <button class="quick-action-btn" onclick="toggleStatus('{{ collaborateur.id }}')">
+                        {% if collaborateur.is_active %}
+                            <i class="fas fa-ban"></i>
+                            <span>Désactiver</span>
+                        {% else %}
+                            <i class="fas fa-check-circle"></i>
+                            <span>Activer</span>
+                        {% endif %}
+                    </button>
+                    
+                    <a href="{% url 'recu_collaborateur' collaborateur.id %}" class="quick-action-btn" target="_blank">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Reçu d'inscription</span>
+                    </a>
+                    
+                    <button class="quick-action-btn" onclick="exportCollaborateurData()">
+                        <i class="fas fa-download"></i>
+                        <span>Exporter données</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Liste des étudiants parrainés -->
+        <div class="card students-card">
+            <div class="card-header">
+                <h3><i class="fas fa-user-graduate"></i> Étudiants parrainés ({{ collaborateur.nombre_etudiant }})</h3>
+                {% if collaborateur.nombre_etudiant > 5 %}
+                <a href="{% url 'liste_etudiant' %}?parrain={{ collaborateur.id }}" class="btn-view-all">
+                    Voir tout <i class="fas fa-arrow-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            
+            <div class="card-body">
+                {% if collaborateur.etudiant_set.all %}
+                    <div class="table-responsive">
+                        <table class="students-table">
+                            <thead>
+                                <tr>
+                                    <th>Matricule</th>
+                                    <th>Nom & Prénom</th>
+                                    <th>Filière</th>
+                                    <th>Niveau</th>
+                                    <th>Téléphone</th>
+                                    <th>Date inscription</th>
+                                    <th>Commission</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for etudiant in collaborateur.etudiant_set.all|slice:":5" %}
+                                <tr>
+                                    <td>
+                                        <span class="matricule-badge">{{ etudiant.matricule|default:"N/A" }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="student-name-cell">
+                                            <div class="student-avatar-small">
+                                                {{ etudiant.first_name|first|upper }}{{ etudiant.last_name|first|upper }}
+                                            </div>
+                                            <div class="student-info">
+                                                <span class="student-name">{{ etudiant.last_name }} {{ etudiant.first_name }}</span>
+                                                <span class="student-email">{{ etudiant.email }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ etudiant.filiere.nom|default:"N/A" }}</td>
+                                    <td>{{ etudiant.niveau.niveau|default:"N/A" }}</td>
+                                    <td>{{ etudiant.contact|default:"N/A" }}</td>
+                                    <td>{{ etudiant.date_inscription|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <span class="commission-badge">
+                                            {{ etudiant.commission_parrain|floatformat:0 }} FCFA
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <a class="action-icon-btn view"
+                                                href="{% url 'detail_etudiant' etudiant.id %}"
+                                                title="Voir détails">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {% if collaborateur.etudiant_set.count > 5 %}
+                    <div class="view-more-link">
+                        <a href="{% url 'liste_etudiant' %}?parrain={{ collaborateur.id }}">
+                            Voir les {{ collaborateur.nombre_etudiant }} étudiants parrainés
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <h4>Aucun étudiant parrainé</h4>
+                        <p>Ce collaborateur n'a pas encore parrainé d'étudiants.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal réinitialisation mot de passe -->
+<div class="modal" id="resetPasswordModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-key"></i> Réinitialisation du mot de passe</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon" style="color: #f39c12;">
+                <i class="fas fa-key"></i>
+            </div>
+            <h4>Réinitialiser le mot de passe ?</h4>
+            <p>Un nouveau mot de passe sera généré pour ce collaborateur.</p>
+            <p class="info-text">Le mot de passe temporaire sera : <strong>@papel@</strong></p>
+            <p class="warning-text">Le collaborateur devra changer son mot de passe à la prochaine connexion.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button class="btn-warning" id="confirmResetPassword">
+                <i class="fas fa-key"></i> Réinitialiser
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal confirmation suppression -->
+<div class="modal" id="deleteConfirmationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Confirmation de suppression</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <h4>Êtes-vous sûr ?</h4>
+            <p>Vous êtes sur le point de supprimer le collaborateur :</p>
+            <p class="collaborateur-to-delete" id="collaborateurToDeleteName"></p>
+            <p class="warning-text">
+                Cette action est irréversible. Les étudiants parrainés ne seront plus associés à ce collaborateur.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <form method="post" action="#" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger">
+                    <i class="fas fa-trash-alt"></i> Supprimer définitivement
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentCollaborateurId = '{{ collaborateur.id }}';
+    let currentCollaborateurName = '{{ collaborateur.last_name }} {{ collaborateur.first_name }}';
+    const csrfToken = '{{ csrf_token }}';
+
+    // Fonctions pour les modals
+    function confirmDelete() {
+        document.getElementById('collaborateurToDeleteName').textContent = currentCollaborateurName;
+        document.getElementById('deleteConfirmationModal').classList.add('active');
+    }
+
+    function resetPassword(id) {
+        currentCollaborateurId = id;
+        document.getElementById('resetPasswordModal').classList.add('active');
+    }
+
+    function toggleStatus(id) {
+        if (confirm('Voulez-vous changer le statut de ce collaborateur ?')) {
+            fetch(`/collaborateurs/${id}/toggle-status/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    showNotification('Erreur lors du changement de statut', 'error');
+                }
+            })
+            .catch(() => showNotification('Erreur de connexion', 'error'));
+        }
+    }
+
+    function exportCollaborateurData() {
+        // Préparer les données à exporter
+        const data = {
+            'Nom': '{{ collaborateur.last_name }}',
+            'Prénom': '{{ collaborateur.first_name }}',
+            'Matricule': '{{ collaborateur.matricule }}',
+            'Email': '{{ collaborateur.email }}',
+            'Téléphone': '{{ collaborateur.contact|default:"Non renseigné" }}',
+            'Code parrainage': '{{ collaborateur.code_parainage|default:"Non généré" }}',
+            'Date inscription': '{{ collaborateur.date_inscription_collaborateur|date:"d/m/Y" }}',
+            'Statut': '{{ collaborateur.is_active|yesno:"Actif,Inactif" }}',
+            'Étudiants parrainés': '{{ collaborateur.nombre_etudiant|default:"0" }}',
+            'Commission totale': '{{ collaborateur.montant_total_parrain|floatformat:0 }} FCFA'
+        };
+        
+        // Convertir en CSV
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + Object.keys(data).join(",") + "\n"
+            + Object.values(data).join(",");
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `collaborateur_{{ collaborateur.matricule }}_{{ collaborateur.last_name }}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showNotification('Données exportées avec succès', 'success');
+    }
+
+    function copyPassword(password) {
+        navigator.clipboard.writeText(password).then(() => {
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-check"></i>';
+            btn.classList.add('copied');
+            
+            showNotification('Mot de passe copié !', 'success');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('copied');
+            }, 2000);
+        }).catch(() => {
+            showNotification('Erreur lors de la copie', 'error');
+        });
+    }
+
+    // Gestionnaire pour la confirmation de réinitialisation
+    document.getElementById('confirmResetPassword')?.addEventListener('click', function() {
+        fetch(`/collaborateurs/${currentCollaborateurId}/reset-password/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Mot de passe réinitialisé avec succès ! Nouveau mot de passe: @papel@', 'success');
+            } else {
+                showNotification('Erreur lors de la réinitialisation', 'error');
+            }
+        })
+        .catch(() => showNotification('Erreur de connexion', 'error'))
+        .finally(() => closeModal('resetPasswordModal'));
+    });
+
+    // Fermer les modals
+    document.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) modal.classList.remove('active');
+        });
+    });
+
+    // Fermer les modals en cliquant à l'extérieur
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+    });
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+    }
+
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+            <span>${message}</span>
+            <button class="notification-close">&times;</button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 10);
+        
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        });
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }, 5000);
+    }
+
+    // Animation au chargement
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelector('.collaborateur-detail-container').style.animation = 'fadeIn 0.5s ease';
+    });
+</script>
+{% endblock %}

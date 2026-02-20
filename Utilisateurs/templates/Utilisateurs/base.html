@@ -77,6 +77,16 @@
                         </ul>
                     </li>
                     <li>
+                        <a href="#">
+                            <i class="fas fa-user-friends"></i>
+                            <span>Collaborateurs</span>
+                        </a>
+                        <ul>
+                            <li><a href="{% url 'inscription_collaborateur' %}">Ajouter un collaborateur</a></li>
+                            <li><a href="{% url 'liste_collaborateurs' %}">Liste des collaborateurs</a></li>
+                        </ul>
+                    </li>
+                    <li>
                         <a href="{% url 'liste_memoire' %}">
                             <i class="fas fa-file-upload"></i>
                             <span>Mémoires</span>
@@ -137,9 +147,9 @@
                     </div>
                 </div>
                 
-                <button class="btn-logout">
+                <a href="{% url 'deconnexion' %}" class="btn-logout">
                     <i class="fas fa-sign-out-alt"></i> Déconnexion
-                </button>
+                </a>
             </div>
         </aside>
         

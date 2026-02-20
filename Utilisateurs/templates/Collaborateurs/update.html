@@ -1,0 +1,375 @@
+{% extends "Utilisateurs/base.html" %}
+{% load static %}
+
+{% block title %}Modifier le collaborateur - {{ collaborateur.get_full_name }} - DbgMemo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Collaborateurs/update.css' %}">
+<style>
+    .update-page-wrapper {
+        padding: 30px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .dashboard-header {
+        margin-bottom: 30px;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 32px;
+        font-weight: 600;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .dashboard-header h1 i {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 36px;
+    }
+    
+    .header-subtitle {
+        color: var(--text-light);
+        font-size: 15px;
+        margin-left: 48px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="update-page-wrapper">
+    <!-- En-tête avec breadcrumb -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <h1>
+                <i class="fas fa-edit"></i>
+                Modifier un collaborateur
+            </h1>
+            <div class="breadcrumb">
+                <a href="{% url 'liste_collaborateurs' %}">Liste des collaborateurs</a> 
+                <i class="fas fa-chevron-right"></i> 
+                <a href="{% url 'detail_collaborateur' collaborateur.id %}">{{ collaborateur.last_name }} {{ collaborateur.first_name }}</a>
+                <i class="fas fa-chevron-right"></i> 
+                <span>Modifier</span>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <a href="{% url 'detail_collaborateur' collaborateur.id %}" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i> Annuler
+            </a>
+        </div>
+    </header>
+
+    <!-- Formulaire de modification -->
+    <div class="card form-card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="update-form">
+                {% csrf_token %}
+                
+                <!-- En-tête du formulaire avec avatar -->
+                <div class="form-header">
+                    <div class="avatar-section">
+                        <div class="current-avatar">
+                            {% if collaborateur.avatar %}
+                                <img src="{{ collaborateur.avatar.url }}" alt="{{ collaborateur.get_full_name }}" id="avatarPreview">
+                            {% else %}
+                                <div class="avatar-placeholder" id="avatarPreview">
+                                    {{ collaborateur.first_name|first|upper }}{{ collaborateur.last_name|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="avatar-upload">
+                            <label for="id_avatar" class="btn-upload">
+                                <i class="fas fa-camera"></i>
+                                Changer la photo
+                            </label>
+                            <input type="file" name="avatar" id="id_avatar" accept="image/*" style="display: none;">
+                            <p class="upload-hint">Format: JPG, PNG. Max: 2MB</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-title">
+                        <h2>{{ collaborateur.last_name|upper }} {{ collaborateur.first_name }}</h2>
+                        <p class="matricule-display">{{ collaborateur.matricule }}</p>
+                    </div>
+                </div>
+                
+                <!-- Grille du formulaire -->
+                <div class="form-grid">
+                    <!-- Informations personnelles -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-user-circle"></i>
+                            Informations personnelles
+                        </h3>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.last_name.id_for_label }}">
+                                <i class="fas fa-user"></i>
+                                Nom
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="error-message">{{ form.last_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.first_name.id_for_label }}">
+                                <i class="fas fa-user"></i>
+                                Prénom
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="error-message">{{ form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}">
+                                <i class="fas fa-envelope"></i>
+                                Email
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="error-message">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.contact.id_for_label }}">
+                                <i class="fas fa-phone"></i>
+                                Téléphone
+                            </label>
+                            {{ form.contact }}
+                            {% if form.contact.errors %}
+                                <div class="error-message">{{ form.contact.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Informations professionnelles -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-briefcase"></i>
+                            Informations professionnelles
+                        </h3>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.matricule.id_for_label }}">
+                                <i class="fas fa-id-card"></i>
+                                Matricule
+                            </label>
+                            {{ form.matricule }}
+                            {% if form.matricule.errors %}
+                                <div class="error-message">{{ form.matricule.errors }}</div>
+                            {% endif %}
+                            <small class="form-help">Laissez vide pour génération automatique</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.code_parainage.id_for_label }}">
+                                <i class="fas fa-gift"></i>
+                                Code de parrainage
+                            </label>
+                            {{ form.code_parainage }}
+                            {% if form.code_parainage.errors %}
+                                <div class="error-message">{{ form.code_parainage.errors }}</div>
+                            {% endif %}
+                            <small class="form-help">Code unique pour le parrainage</small>
+                        </div>
+                        
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                {{ form.is_active }}
+                                <span>
+                                    <i class="fas fa-toggle-on"></i>
+                                    Compte actif
+                                </span>
+                            </label>
+                            {% if form.is_active.errors %}
+                                <div class="error-message">{{ form.is_active.errors }}</div>
+                            {% endif %}
+                            <small class="form-help">Décochez pour désactiver l'accès à la plateforme</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistiques (lecture seule) -->
+                <div class="stats-summary">
+                    <h3 class="section-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Statistiques (lecture seule)
+                    </h3>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Date d'inscription</span>
+                            <span class="stat-value">{{ collaborateur.date_inscription_collaborateur|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Étudiants parrainés</span>
+                            <span class="stat-value">{{ collaborateur.nombre_etudiant|default:"0" }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Commission totale</span>
+                            <span class="stat-value">{{ collaborateur.montant_total_parrain|floatformat:0 }} FCFA</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Dernière connexion</span>
+                            <span class="stat-value">{{ collaborateur.last_login|date:"d/m/Y H:i"|default:"Jamais" }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions du formulaire -->
+                <div class="form-actions">
+                    <a href="{% url 'detail_collaborateur' collaborateur.id %}" class="btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Annuler
+                    </a>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i>
+                        Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Actions supplémentaires -->
+    <div class="card actions-card">
+        <div class="card-body">
+            <div class="additional-actions">
+                <h4>Actions supplémentaires</h4>
+                <div class="actions-grid">
+                    <a href="{% url 'recu_collaborateur' collaborateur.id %}" class="action-link" target="_blank">
+                        <i class="fas fa-file-pdf"></i>
+                        Voir le reçu
+                    </a>
+                    <button onclick="resetPassword('{{ collaborateur.id }}')" class="action-link">
+                        <i class="fas fa-key"></i>
+                        Réinitialiser mot de passe
+                    </button>
+                    <a href="{% url 'delete_collaborateur' collaborateur.id %}" class="action-link danger">
+                        <i class="fas fa-trash-alt"></i>
+                        Supprimer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal réinitialisation mot de passe -->
+<div class="modal" id="resetPasswordModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-key"></i> Réinitialisation du mot de passe</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon" style="color: #f39c12;">
+                <i class="fas fa-key"></i>
+            </div>
+            <h4>Réinitialiser le mot de passe ?</h4>
+            <p>Un nouveau mot de passe sera généré pour {{ collaborateur.first_name }}.</p>
+            <p class="info-text">Le mot de passe temporaire sera : <strong>@papel@</strong></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button class="btn-warning" id="confirmResetPassword">
+                <i class="fas fa-key"></i> Réinitialiser
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const csrfToken = '{{ csrf_token }}';
+    const collaborateurId = '{{ collaborateur.id }}';
+
+    // Prévisualisation de l'avatar
+    document.getElementById('id_avatar')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('avatarPreview');
+                if (preview.tagName === 'IMG') {
+                    preview.src = e.target.result;
+                } else {
+                    // Remplacer le placeholder par une image
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.id = 'avatarPreview';
+                    img.alt = 'Avatar preview';
+                    preview.parentNode.replaceChild(img, preview);
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Bouton d'upload
+    document.querySelector('.btn-upload')?.addEventListener('click', function() {
+        document.getElementById('id_avatar').click();
+    });
+
+    // Fonctions pour les modals
+    function resetPassword(id) {
+        document.getElementById('resetPasswordModal').classList.add('active');
+    }
+
+    document.getElementById('confirmResetPassword')?.addEventListener('click', function() {
+        fetch(`/collaborateurs/${collaborateurId}/reset-password/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Mot de passe réinitialisé avec succès ! Nouveau mot de passe: @papel@');
+            } else {
+                alert('Erreur lors de la réinitialisation');
+            }
+        })
+        .catch(() => alert('Erreur de connexion'))
+        .finally(() => closeModal('resetPasswordModal'));
+    });
+
+    // Fermer les modals
+    document.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) modal.classList.remove('active');
+        });
+    });
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+    }
+
+    // Validation du formulaire
+    document.querySelector('.update-form')?.addEventListener('submit', function(e) {
+        const email = document.getElementById('{{ form.email.id_for_label }}').value;
+        const phone = document.getElementById('{{ form.contact.id_for_label }}').value;
+        
+        if (!email.includes('@')) {
+            e.preventDefault();
+            alert('Veuillez entrer une adresse email valide');
+        }
+    });
+</script>
+{% endblock %}

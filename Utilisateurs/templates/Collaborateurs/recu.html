@@ -1,0 +1,326 @@
+{% extends "Utilisateurs/base.html" %}
+{% load static %}
+
+{% block title %}Reçu d'inscription - {{ collaborateur.get_full_name }} - DbgMemo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Collaborateurs/recu.css' %}">
+<style>
+    /* Styles spécifiques pour éviter le mélange avec le dashboard */
+    .main-content {
+        background: var(--bg-color);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    .receipt-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* S'assurer que le reçu a son propre contexte */
+    .receipt-card {
+        isolation: isolate;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="receipt-container">
+        <!-- En-tête avec actions -->
+        <div class="receipt-actions no-print">
+            <div class="actions-left">
+                <a href="{% url 'liste_collaborateurs' %}" class="btn-back">
+                    <i class="fas fa-arrow-left"></i>
+                    Retour à la liste
+                </a>
+            </div>
+            <div class="actions-right">
+                <button onclick="window.print()" class="btn-print">
+                    <i class="fas fa-print"></i>
+                    Imprimer le reçu
+                </button>
+                <a href="#" class="btn-new">
+                    <i class="fas fa-user-plus"></i>
+                    Nouveau collaborateur
+                </a>
+            </div>
+        </div>
+
+        <!-- Reçu principal -->
+        <div class="receipt-card" id="receipt-card">
+            <!-- En-tête du reçu -->
+            <div class="receipt-header">
+                <div class="company-info">
+                    <div class="company-logo">
+                        {% if company_logo %}
+                            <img src="{{ company_logo }}" alt="DbgMemo Logo" class="logo-image">
+                        {% else %}
+                            <i class="fas fa-gem"></i>
+                        {% endif %}
+                    </div>
+                    <div class="company-details">
+                        <h1>DbgMemo</h1>
+                        <p>Solutions de Mémoire et Documentation</p>
+                        <p class="company-address">
+                            <i class="fas fa-map-marker-alt"></i> Abidjan, Cocody
+                        </p>
+                    </div>
+                </div>
+                <div class="receipt-badge">
+                    <span class="badge-success">Collaborateur enregistré</span>
+                </div>
+            </div>
+
+            <!-- Titre du document -->
+            <div class="receipt-title">
+                <h2>Reçu de collaboration</h2>
+                <div class="receipt-reference">
+                    <span class="ref-label">N° Référence :</span>
+                    <span class="ref-value">{{ collaborateur.matricule }}</span>
+                </div>
+            </div>
+
+            <!-- Date d'émission -->
+            <div class="receipt-date">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Émis le : {{ date_emission|date:"l d F Y" }} à {{ date_emission|date:"H:i" }}</span>
+            </div>
+
+            <!-- Grille d'informations -->
+            <div class="info-grid">
+                <!-- Identité du collaborateur -->
+                <div class="info-section">
+                    <div class="section-header">
+                        <i class="fas fa-user-circle"></i>
+                        <h3>Identité du collaborateur</h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="info-row">
+                            <span class="info-label">Nom complet :</span>
+                            <span class="info-value">{{ collaborateur.last_name|upper }} {{ collaborateur.first_name }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Matricule :</span>
+                            <span class="info-value matricule">{{ collaborateur.matricule }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email :</span>
+                            <span class="info-value">{{ collaborateur.email }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Téléphone :</span>
+                            <span class="info-value">{{ collaborateur.contact|default:"Non renseigné" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informations de compte -->
+                <div class="info-section highlight">
+                    <div class="section-header">
+                        <i class="fas fa-lock"></i>
+                        <h3>Informations de connexion</h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="info-row">
+                            <span class="info-label">Identifiant :</span>
+                            <span class="info-value">{{ collaborateur.email }}</span>
+                        </div>
+                        <div class="info-row password-row">
+                            <span class="info-label">Mot de passe par défaut :</span>
+                            <div class="password-display">
+                                <span class="password-value">@papel@</span>
+                                <button class="copy-password-btn no-print" onclick="copyPassword('@papel@')" title="Copier le mot de passe">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="info-note">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Le mot de passe devra être changé lors de la première connexion</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informations générées -->
+                <div class="info-section">
+                    <div class="section-header">
+                        <i class="fas fa-cogs"></i>
+                        <h3>Informations générées</h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="info-row">
+                            <span class="info-label">Code parrainage :</span>
+                            <span class="info-value code">{{ collaborateur.code_parrainage|default:"DBG7F3K9" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Date d'inscription :</span>
+                            <span class="info-value">{{ collaborateur.date_inscription_collaborateur|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Statut :</span>
+                            <span class="info-value">
+                                <span class="status-badge status-active">Actif</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QR Code pour connexion rapide -->
+                <div class="info-section qr-section-integrated">
+                    <div class="section-header">
+                        <i class="fas fa-qrcode"></i>
+                        <h3>Connexion rapide</h3>
+                    </div>
+                    <div class="qr-content">
+                        <div class="qr-code-container">
+                            {% if qr_code_base64 %}
+                                <img src="{{ qr_code_base64 }}" alt="QR Code de connexion" class="qr-code-image">
+                            {% else %}
+                                <div class="qr-placeholder">
+                                    <i class="fas fa-qrcode"></i>
+                                    <span>QR Code</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="qr-info-text">
+                            <p><i class="fas fa-mobile-alt"></i> Scannez ce code pour vous connecter</p>
+                            <p class="qr-hint">L'email sera automatiquement pré-rempli</p>
+                            <div class="qr-url">{{ qr_login_url|truncatechars:40 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions importantes -->
+            <div class="instructions-section">
+                <h4>
+                    <i class="fas fa-clipboard-list"></i>
+                    Instructions importantes
+                </h4>
+                <div class="instructions-grid">
+                    <div class="instruction-item">
+                        <div class="instruction-icon">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div class="instruction-text">
+                            <strong>Première connexion</strong>
+                            <p>Utilisez votre email et le mot de passe par défaut (@papel@)</p>
+                        </div>
+                    </div>
+                    <div class="instruction-item">
+                        <div class="instruction-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="instruction-text">
+                            <strong>Changement de mot de passe</strong>
+                            <p>Vous serez invité à changer votre mot de passe dès la première connexion</p>
+                        </div>
+                    </div>
+                    <div class="instruction-item">
+                        <div class="instruction-icon">
+                            <i class="fas fa-gift"></i>
+                        </div>
+                        <div class="instruction-text">
+                            <strong>Code de parrainage</strong>
+                            <p>Utilisez ce code pour bénéficier d'avantages et suivre vos parrainages</p>
+                        </div>
+                    </div>
+                    <div class="instruction-item">
+                        <div class="instruction-icon">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <div class="instruction-text">
+                            <strong>Assistance</strong>
+                            <p>Contactez le support au +225 01 23 45 67 ou support@dbgmemo.com</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signature et cachet -->
+            <div class="signature-section">
+                <div class="signature-left">
+                    <div class="signature-line"></div>
+                    <p>Signature du collaborateur</p>
+                    <small>(Précédée de la mention "lu et approuvé")</small>
+                </div>
+                <div class="signature-right">
+                    <div class="stamp">
+                        <i class="fas fa-check-circle"></i>
+                        <span>DbgMemO</span>
+                        <small>Service Collaborateurs</small>
+                    </div>
+                    <div class="signature-line"></div>
+                    <p>Responsable inscription</p>
+                </div>
+            </div>
+
+            <!-- Pied de page -->
+            <div class="receipt-footer">
+                <p>Ce document est délivré à titre d'attestation d'inscription. Il doit être conservé précieusement.</p>
+                <div class="footer-links">
+                    <span>DbgMemO - Solutions de Mémoire et Documentation</span>
+                    <span>www.dbgmemo.com</span>
+                </div>
+            </div>
+
+            <!-- Filigrane -->
+            <div class="watermark">DbgMemO</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/Collaborateurs/recu.js' %}"></script>
+<script>
+    function copyPassword(password) {
+        navigator.clipboard.writeText(password).then(() => {
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-check"></i>';
+            btn.classList.add('copied');
+            
+            showNotification('Mot de passe copié !', 'success');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('copied');
+            }, 2000);
+        }).catch(() => {
+            showNotification('Erreur lors de la copie', 'error');
+        });
+    }
+
+    function testQRCode() {
+        const qrUrl = "{{ qr_login_url|escapejs }}";
+        window.open(qrUrl, '_blank');
+    }
+
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // Rediriger vers la version d'impression si demandé
+    document.querySelector('.btn-print')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        const printUrl = window.location.href.split('?')[0] + '?print=true';
+        window.open(printUrl, '_blank', 'width=900,height=700');
+    });
+</script>
+{% endblock %}

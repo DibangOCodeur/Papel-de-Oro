@@ -1,0 +1,204 @@
+{% extends "Collaborateurs/base.html" %}
+{% load static %}
+
+{% block title %}Mémoires Imprimés - DbgMemo Mobile{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Collaborateurs/liste-memoires.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Bouton retour spécifique à la page -->
+<button class="back-button" id="backButton" title="Retour">
+    <i class="fas fa-arrow-left"></i>
+</button>
+
+<!-- Header avec titre -->
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-print" style="color: var(--primary);"></i>
+        Mémoires Imprimés
+    </h1>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="quick-stats-row">
+    <div class="quick-stat-card">
+        <span class="stat-value">{{ stats.total_imprimes }}</span>
+        <span class="stat-label">Total imprimés</span>
+    </div>
+    <div class="quick-stat-card">
+        <span class="stat-value">{{ stats.en_attente_livraison }}</span>
+        <span class="stat-label">À livrer</span>
+    </div>
+    <div class="quick-stat-card">
+        <span class="stat-value">{{ stats.livres_mois }}</span>
+        <span class="stat-label">Livrés (mois)</span>
+    </div>
+    <div class="quick-stat-card">
+        <span class="stat-value">{{ stats.ca_total|floatformat:0 }}F</span>
+        <span class="stat-label">Mon Solde</span>
+    </div>
+</div>
+
+<!-- Filtres d'onglets -->
+<div class="tabs-container">
+    <button class="tab-btn active" data-tab="tous">
+        <i class="fas fa-layer-group"></i>
+        <span>Tous</span>
+    </button>
+    <button class="tab-btn" data-tab="attente">
+        <i class="fas fa-clock"></i>
+        <span>En attente</span>
+        {% if stats.en_attente_livraison > 0 %}
+        <span class="tab-badge">{{ stats.en_attente_livraison }}</span>
+        {% endif %}
+    </button>
+    <button class="tab-btn" data-tab="livres">
+        <i class="fas fa-check-circle"></i>
+        <span>Livrés</span>
+    </button>
+</div>
+
+<!-- Barre de recherche -->
+<div class="search-bar">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchMemoires" placeholder="Rechercher un mémoire...">
+</div>
+
+<!-- Liste des mémoires -->
+<div class="memoires-list" id="memoiresList">
+    {% for memoire in memoires_data %}
+    <div class="memoire-card glass-effect" 
+         data-statut="{% if memoire.livre %}livre{% else %}attente{% endif %}"
+         data-nom="{{ memoire.etudiant_nom|lower }}"
+         data-filiere="{{ memoire.filiere|lower }}"
+         data-theme="{{ memoire.theme|lower }}">
+        
+        <!-- En-tête de la carte -->
+        <div class="memoire-card-header">
+            <div class="memoire-avatar {% if memoire.livre %}livre{% endif %}">
+                <i class="fas fa-file-pdf"></i>
+            </div>
+            <div class="memoire-info">
+                <h3 class="memoire-titre">{{ memoire.etudiant_nom }}</h3>
+                <div class="memoire-meta">
+                    <span class="memoire-etudiant">
+                        <i class="fas fa-user-graduate"></i> {{ memoire.matricule }}
+                    </span>
+                    <span class="memoire-filiere">
+                        <i class="fas fa-graduation-cap"></i> {{ memoire.filiere }}
+                    </span>
+                </div>
+            </div>
+            <div class="memoire-status">
+                <span class="status-badge status-{% if memoire.livre %}livre{% else %}attente{% endif %}">
+                    {% if memoire.livre %}
+                        <i class="fas fa-check-circle"></i> Livré
+                    {% else %}
+                        <i class="fas fa-clock"></i> En attente
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- Informations détaillées -->
+        <div class="memoire-details">
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-label">Date impression</span>
+                    <span class="detail-value">{{ memoire.date_impression }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Niveau</span>
+                    <span class="detail-value">{{ memoire.niveau }}</span>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-label">Thème mémoire</span>
+                    <span class="detail-value">{{ memoire.theme|truncatechars:40 }}</span>
+                </div>
+            </div>
+
+            <!-- Informations de paiement -->
+            <div class="paiement-row">
+                
+                <div class="paiement-item">
+                    <i class="fas fa-hand-holding-usd" style="color: var(--primary);"></i>
+                    <div>
+                        <span class="paiement-label">Commission</span>
+                        <span class="paiement-value">{{ memoire.commission|floatformat:0 }}F</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            {% comment %} <div class="memoire-actions">
+                <button class="action-btn primary" onclick="voirDetails({{ memoire.id }})">
+                    <i class="fas fa-eye"></i>
+                    <span>Détails</span>
+                </button>
+                <button class="action-btn success" onclick="telechargerPDF({{ memoire.id }})">
+                    <i class="fas fa-download"></i>
+                    <span>PDF</span>
+                </button>
+                {% if not memoire.livre %}
+                <button class="action-btn info" onclick="marquerLivre({{ memoire.id }})">
+                    <i class="fas fa-truck"></i>
+                    <span>Livrer</span>
+                </button>
+                {% endif %}
+                <button class="action-btn more" onclick="plusOptions({{ memoire.id }})">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+            </div> {% endcomment %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <i class="fas fa-print"></i>
+        <h3>Aucun mémoire imprimé</h3>
+        <p>Les mémoires imprimés apparaîtront ici une fois le traitement terminé.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination (si nécessaire) -->
+{% if pagination %}
+<div class="pagination">
+    {% if memoires.has_previous %}
+    <button class="page-btn" onclick="changerPage({{ memoires.previous_page_number }})">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    {% endif %}
+
+    <span class="page-info">{{ memoires.number }} / {{ memoires.paginator.num_pages }}</span>
+
+    {% if memoires.has_next %}
+    <button class="page-btn" onclick="changerPage({{ memoires.next_page_number }})">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/Collaborateurs/liste-memoires.js' %}"></script>
+
+<script>
+    // Données spécifiques à cette page
+    window.memoiresStats = {{ stats_json|safe }};
+    
+    // Mise à jour des URLs spécifiques
+    window.appUrls = {
+        ...window.appUrls,
+        details_memoire: "{% url 'details_memoire' 0 %}".replace('/0/', '/'),
+        telecharger_pdf: "{% url 'telecharger_pdf' 0 %}".replace('/0/', '/'),
+        marquer_livre: "{% url 'marquer_livre' 0 %}".replace('/0/', '/'),
+        memoires_encours: "{% url 'memoires_encours' %}"
+    };
+</script>
+{% endblock %}

@@ -338,7 +338,7 @@ class TombolaListView(ListView):
 
         # Compter le nombre total de participants à la tombola
         nb_tombola = paiements_tombola.count()
-        montant_Perdu = montant_Perdu['total_reduction']
+        montant_Perdu = montant_Perdu['total_reduction'] or 0
         nb_gagnant = nb_gagnant 
 
         

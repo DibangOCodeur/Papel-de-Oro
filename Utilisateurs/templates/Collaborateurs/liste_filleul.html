@@ -1,0 +1,173 @@
+{% extends "Collaborateurs/base.html" %}
+{% load static %}
+
+{% block title %}Mes Filleul(e)s - DbgMemo Mobile{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Collaborateurs/liste-filleuls.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Bouton retour spécifique à la page -->
+<button class="back-button" id="backButton" title="Retour">
+    <i class="fas fa-arrow-left"></i>
+</button>
+
+<!-- Header avec titre -->
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-users" style="color: var(--primary);"></i>
+        Mes Filleul(e)s
+    </h1>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="quick-stats-row">
+    <div class="quick-stat-card">
+        <span class="stat-value">{{ stats.total }}</span>
+        <span class="stat-label">Total</span>
+    </div>
+    <div class="quick-stat-card">
+        <span class="stat-value">{{ stats.actifs }}</span>
+        <span class="stat-label">Actifs</span>
+    </div>
+    <div class="quick-stat-card">
+        <span class="stat-value">{{ stats.nouveaux_mois }}</span>
+        <span class="stat-label">Ce mois</span>
+    </div>
+    <div class="quick-stat-card">
+        <span class="stat-value">{{ stats.commission_total|floatformat:0 }}F</span>
+        <span class="stat-label">Commissions</span>
+    </div>
+</div>
+
+<!-- Barre de recherche -->
+<div class="search-bar">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchFilleuls" placeholder="Rechercher un filleul...">
+</div>
+
+<!-- Filtres rapides -->
+<div class="filter-chips" id="filterChips">
+    <button class="chip active" data-filter="all">Tous</button>
+    <button class="chip" data-filter="actif">Actifs</button>
+    <button class="chip" data-filter="en_attente">En attente</button>
+    <button class="chip" data-filter="termine">Terminés</button>
+</div>
+
+<!-- Liste des filleuls -->
+<div class="filleuls-list" id="filleulsList">
+    {% for filleul in filleuls_data %}
+    <div class="filleul-card glass-effect" 
+         data-statut="{{ filleul.statut_dossier|lower }}" 
+         data-nom="{{ filleul.nom|lower }}" 
+         data-filiere="{{ filleul.filiere|lower }}">
+        
+        <!-- En-tête de la carte -->
+        <div class="filleul-card-header">
+            <div class="filleul-avatar {% if filleul.actif %}active{% endif %}">
+                {{ filleul.initiales }}
+            </div>
+            <div class="filleul-info">
+                <h3 class="filleul-nom">{{ filleul.nom }}</h3>
+                <div class="filleul-meta">
+                    <span class="filleul-filiere">
+                        <i class="fas fa-graduation-cap"></i> {{ filleul.filiere }}
+                    </span>
+                    <span class="filleul-matricule">#{{ filleul.matricule }}</span>
+                </div>
+            </div>
+            <div class="filleul-status">
+                <span class="status-badge status-{{ filleul.statut_dossier|lower|cut:' ' }}">
+                    {{ filleul.statut_dossier }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Informations détaillées -->
+        <div class="filleul-details">
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-label">Date inscription</span>
+                    <span class="detail-value">{{ filleul.date_inscription }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Niveau</span>
+                    <span class="detail-value">{{ filleul.niveau }}</span>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-label">Thème de Memoire</span>
+                    <span class="detail-value">{{ filleul.theme|truncatechars:30 }}</span>
+                </div>
+            </div>
+
+            <!-- Statistiques de paiement -->
+            <div class="stats-row">
+                <div class="stat-item">
+                    <i class="fas fa-hand-holding-usd" style="color: var(--primary);"></i>
+                    <div>
+                        <span class="stat-small">Commission</span>
+                        <span class="stat-number">{{ filleul.commission|floatformat:0 }}F</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    
+                </div>
+                
+                <div class="stat-item">
+                    <i class="fas fa-file-pdf" style="color: var(--info);"></i>
+                    <div>
+                        <span class="stat-small">Dossier</span>
+                        <span class="stat-number">{{ filleul.etat_dossier }}/5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <i class="fas fa-users"></i>
+        <h3>Aucun filleul pour le moment</h3>
+        <p>Commencez à parrainer des étudiants pour les voir apparaître ici.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination (si vous utilisez la pagination) -->
+{% if pagination %}
+<div class="pagination">
+    {% if filleuls.has_previous %}
+    <button class="page-btn" onclick="changerPage({{ filleuls.previous_page_number }})">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    {% endif %}
+
+    <span class="page-info">{{ filleuls.number }} / {{ filleuls.paginator.num_pages }}</span>
+
+    {% if filleuls.has_next %}
+    <button class="page-btn" onclick="changerPage({{ filleuls.next_page_number }})">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/Collaborateurs/liste-filleul.js' %}"></script>
+
+<script>
+    // Données spécifiques à cette page
+    window.filleulsStats = {{ stats_json|safe }};
+    
+    // Mise à jour des URLs spécifiques
+    window.appUrls = {
+        ...window.appUrls,
+        dossier: "#".replace('/0/', '/'),
+        paiements: "#".replace('/0/', '/'),
+    };
+</script>
+{% endblock %}

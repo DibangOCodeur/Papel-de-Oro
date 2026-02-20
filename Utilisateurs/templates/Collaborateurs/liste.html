@@ -1,0 +1,903 @@
+{% extends "Utilisateurs/base.html" %}
+{% load static %}
+
+{% block title %}Liste des collaborateurs - DbgMemo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Collaborateurs/liste.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <h1>Liste des Collaborateurs</h1>
+            <p>Gestion et visualisation de tous les collaborateurs inscrits</p>
+        </div>
+        
+        <div class="header-right">
+            <a href="{% url 'inscription_collaborateur' %}" class="btn-primary">
+                <i class="fas fa-user-plus"></i> Nouveau collaborateur
+            </a>
+        </div>
+    </header>
+    
+    <!-- Statistiques rapides -->
+    <section class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Collaborateurs</h3>
+                <p class="stat-number">{{ total_collaborateurs }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(46, 204, 113, 0.1);">
+                <i class="fas fa-user-check" style="color: #27ae60;"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Collaborateurs actifs</h3>
+                <p class="stat-number">{{ collaborateurs_actifs }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(52, 152, 219, 0.1);">
+                <i class="fas fa-calendar-plus" style="color: #3498db;"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Nouveaux cette semaine</h3>
+                <p class="stat-number">{{ nouveaux_cette_semaine }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(155, 89, 182, 0.1);">
+                <i class="fas fa-user-graduate" style="color: #9b59b6;"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Étudiants associés</h3>
+                <p class="stat-number">{{ total_etudiants_associes }}</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Contrôles et filtres -->
+    <section class="controls-section">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" id="filterForm">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label><i class="fas fa-search"></i> Recherche</label>
+                            <div class="search-box">
+                                <input type="text" name="search" id="searchInput" 
+                                       placeholder="Rechercher un collaborateur..."
+                                       value="{{ request.GET.search }}">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fas fa-filter"></i> Statut</label>
+                            <select name="statut" id="filterStatut" class="filter-select">
+                                <option value="">Tous les statuts</option>
+                                <option value="actif" {% if request.GET.statut == 'actif' %}selected{% endif %}>Actifs</option>
+                                <option value="inactif" {% if request.GET.statut == 'inactif' %}selected{% endif %}>Inactifs</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fas fa-calendar"></i> Période</label>
+                            <select name="periode" id="filterPeriode" class="filter-select">
+                                <option value="">Toutes les périodes</option>
+                                <option value="aujourdhui" {% if request.GET.periode == 'aujourdhui' %}selected{% endif %}>Aujourd'hui</option>
+                                <option value="semaine" {% if request.GET.periode == 'semaine' %}selected{% endif %}>Cette semaine</option>
+                                <option value="mois" {% if request.GET.periode == 'mois' %}selected{% endif %}>Ce mois</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label><i class="fas fa-grip"></i> Affichage</label>
+                            <div class="view-toggle">
+                                <button type="button" class="view-toggle-btn {% if view_mode == 'cards' or not view_mode %}active{% endif %}" id="viewCards" data-view="cards">
+                                    <i class="fas fa-th-large"></i> Cartes
+                                </button>
+                                <button type="button" class="view-toggle-btn {% if view_mode == 'table' %}active{% endif %}" id="viewTable" data-view="table">
+                                    <i class="fas fa-table"></i> Tableau
+                                </button>
+                            </div>
+                            <input type="hidden" name="view" id="viewMode" value="{{ view_mode|default:'cards' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <a href="{% url 'liste_collaborateurs' %}" class="btn-secondary" id="resetFilters">
+                            <i class="fas fa-redo"></i> Réinitialiser
+                        </a>
+                        
+                        <div class="export-buttons">
+                            <button type="button" class="btn-export" id="exportPDF">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                            <button type="button" class="btn-export btn-export-excel" id="exportExcel">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </button>
+                            <button type="button" class="btn-export" id="exportPrint">
+                                <i class="fas fa-print"></i> Imprimer
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Vue en cartes (par défaut) -->
+    <section class="cards-view-section" id="cardsView" style="{% if view_mode == 'table' %}display: none;{% endif %}">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-th-large"></i> Collaborateurs - Vue Cartes</h3>
+                <span class="total-count">{{ total_collaborateurs }} collaborateurs</span>
+            </div>
+            
+            <div class="card-body">
+                <div class="collaborateurs-grid">
+                    {% for collaborateur in collaborateurs %}
+                    <div class="collaborateur-card" data-id="{{ collaborateur.id }}">
+                        <div class="card-header">
+                            <div class="collaborateur-avatar">
+                                {% if collaborateur.avatar %}
+                                    <img src="{{ collaborateur.avatar.url }}" alt="{{ collaborateur.get_full_name }}">
+                                {% else %}
+                                    <div class="avatar-placeholder">
+                                        {{ collaborateur.first_name|first|upper }}{{ collaborateur.last_name|first|upper }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="collaborateur-info">
+                                <h3 class="collaborateur-nom">
+                                    {{ collaborateur.last_name|upper }} {{ collaborateur.first_name }}
+                                </h3>
+                                <p class="collaborateur-matricule">
+                                    <i class="fas fa-id-card"></i>
+                                    {{ collaborateur.matricule }}
+                                </p>
+                            </div>
+                            <div class="collaborateur-status">
+                                {% if collaborateur.is_active %}
+                                    <span class="status-badge status-actif">
+                                        <i class="fas fa-circle"></i>
+                                        Actif
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-inactif">
+                                        <i class="fas fa-circle"></i>
+                                        Inactif
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="info-row">
+                                <i class="fas fa-envelope"></i>
+                                <span>{{ collaborateur.email }}</span>
+                            </div>
+                            <div class="info-row">
+                                <i class="fas fa-phone"></i>
+                                <span>{{ collaborateur.contact|default:"Non renseigné" }}</span>
+                            </div>
+                            <div class="info-row">
+                                <i class="fas fa-calendar"></i>
+                                <span>Inscrit le {{ collaborateur.date_inscription_collaborateur|date:"d/m/Y" }}</span>
+                            </div>
+                            
+                            <!-- Statistiques -->
+                            <div class="stats-mini">
+                                <div class="stat-mini-item" title="Étudiants associés">
+                                    <i class="fas fa-user-graduate"></i>
+                                    <span>{{ collaborateur.nombre_etudiants|default:"0" }}</span>
+                                </div>
+                                <div class="stat-mini-item" title="Code de parrainage">
+                                    <i class="fas fa-gift"></i>
+                                    <span class="code">{{ collaborateur.code_parainage|default:"---" }}</span>
+                                </div>
+                                <div class="stat-mini-item" title="Commission">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <span>{{ collaborateur.commission_total|default:"0" }} FCFA</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <a href="{% url 'detail_collaborateur' collaborateur.id %}" class="btn-action btn-view" title="Voir détails">
+                                <i class="fas fa-eye"></i>
+                                Détails
+                            </a>
+                            <a href="{% url 'update_collaborateur' collaborateur.id %}" class="btn-action btn-edit" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'recu_collaborateur' collaborateur.id %}" class="btn-action btn-receipt" title="Reçu d'inscription" target="_blank">
+                                <i class="fas fa-file-pdf"></i>
+                            </a>
+                            <button class="btn-action btn-more" onclick="toggleActions('{{ collaborateur.id }}')" title="Plus d'actions">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            
+                            <!-- Menu d'actions supplémentaires -->
+                            <div class="actions-menu" id="menu-{{ collaborateur.id }}">
+                                <a href="#" onclick="resetPassword('{{ collaborateur.id }}')" class="menu-item">
+                                    <i class="fas fa-key"></i>
+                                    Réinitialiser mot de passe
+                                </a>
+                                <a href="#" onclick="toggleStatus('{{ collaborateur.id }}')" class="menu-item">
+                                    {% if collaborateur.is_active %}
+                                        <i class="fas fa-ban"></i>
+                                        Désactiver
+                                    {% else %}
+                                        <i class="fas fa-check-circle"></i>
+                                        Activer
+                                    {% endif %}
+                                </a>
+                                <a href="{% url 'delete_collaborateur' collaborateur.id %}" onclick="deleteCollaborateur('{{ collaborateur.id }}', '{{ collaborateur.last_name }} {{ collaborateur.first_name }}')" class="menu-item text-danger">
+                                    <i class="fas fa-trash"></i>
+                                    Supprimer
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-users-slash"></i>
+                        </div>
+                        <h3>Aucun collaborateur trouvé</h3>
+                        <p>
+                            {% if request.GET.search or request.GET.statut or request.GET.periode %}
+                                Aucun collaborateur ne correspond à vos critères de recherche.
+                                <a href="{% url 'liste_collaborateurs' %}" class="reset-link">Réinitialiser les filtres</a>
+                            {% else %}
+                                Commencez par ajouter votre premier collaborateur.
+                            {% endif %}
+                        </p>
+                        {% if not request.GET.search and not request.GET.statut and not request.GET.periode %}
+                        <a href="{% url 'inscription_collaborateur' %}" class="btn-primary">
+                            <i class="fas fa-user-plus"></i>
+                            Ajouter un collaborateur
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Vue en tableau -->
+    <section class="table-view-section" id="tableView" style="{% if view_mode != 'table' %}display: none;{% endif %}">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-table"></i> Collaborateurs - Vue Tableau</h3>
+                <span class="total-count">{{ total_collaborateurs }} collaborateurs</span>
+            </div>
+            
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="students-table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAll">
+                                </th>
+                                <th>Matricule</th>
+                                <th>Nom & Prénom(s)</th>
+                                <th>Email</th>
+                                <th>Téléphone</th>
+                                <th>Statut</th>
+                                <th>Code parrainage</th>
+                                <th>Étudiants</th>
+                                <th>Date inscription</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for collaborateur in collaborateurs %}
+                            <tr data-id="{{ collaborateur.id }}">
+                                <td>
+                                    <input type="checkbox" class="collaborateur-checkbox" 
+                                           data-id="{{ collaborateur.id }}">
+                                </td>
+                                <td>
+                                    <span class="matricule-badge">{{ collaborateur.matricule }}</span>
+                                </td>
+                                <td>
+                                    <div class="student-name-cell">
+                                        <div class="student-avatar-small">
+                                            {{ collaborateur.first_name|first|upper }}{{ collaborateur.last_name|first|upper }}
+                                        </div>
+                                        <div class="student-info">
+                                            <span class="student-name">{{ collaborateur.last_name }} {{ collaborateur.first_name }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ collaborateur.email }}</td>
+                                <td>{{ collaborateur.contact|default:"N/A" }}</td>
+                                <td>
+                                    {% if collaborateur.is_active %}
+                                        <span class="status-badge status-actif">
+                                            <i class="fas fa-circle"></i> Actif
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge status-inactif">
+                                            <i class="fas fa-circle"></i> Inactif
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="code-badge">{{ collaborateur.code_parainage|default:"---" }}</span>
+                                </td>
+                                <td>
+                                    <span class="students-count">{{ collaborateur.nombre_etudiants|default:"0" }}</span>
+                                </td>
+                                <td>{{ collaborateur.date_inscription_collaborateur|date:"d/m/Y" }}</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a class="action-icon-btn view"
+                                            href="{% url 'detail_collaborateur' collaborateur.id %}"
+                                            title="Voir détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'update_collaborateur' collaborateur.id %}" 
+                                           class="action-icon-btn edit" 
+                                           title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'delete_collaborateur' collaborateur.id %}" 
+                                            class="action-icon-btn delete" 
+                                            title="Supprimer">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="10" class="text-center">
+                                    <div class="empty-state">
+                                        <i class="fas fa-users-slash fa-3x"></i>
+                                        <h4>Aucun collaborateur trouvé</h4>
+                                        <p>Aucun collaborateur ne correspond à vos critères.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Pagination Django -->
+    {% if is_paginated %}
+    <div class="table-footer">
+        <div class="pagination-info">
+            Affichage de <span id="startRow">{{ page_obj.start_index }}</span> 
+            à <span id="endRow">{{ page_obj.end_index }}</span> 
+            sur <span id="totalRows">{{ paginator.count }}</span> collaborateurs
+        </div>
+        
+        <div class="pagination-controls">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+               class="pagination-btn" id="prevPage">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% else %}
+            <span class="pagination-btn disabled">
+                <i class="fas fa-chevron-left"></i>
+            </span>
+            {% endif %}
+            
+            <span class="page-numbers">
+                Page <span id="currentPage">{{ page_obj.number }}</span> 
+                sur <span id="totalPages">{{ paginator.num_pages }}</span>
+            </span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+               class="pagination-btn" id="nextPage">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% else %}
+            <span class="pagination-btn disabled">
+                <i class="fas fa-chevron-right"></i>
+            </span>
+            {% endif %}
+        </div>
+        
+        <div class="rows-per-page">
+            <label>Afficher :</label>
+            <select id="rowsPerPage" onchange="changeRowsPerPage(this.value)">
+                <option value="10" {% if paginate_by == 10 %}selected{% endif %}>10</option>
+                <option value="25" {% if paginate_by == 25 %}selected{% endif %}>25</option>
+                <option value="50" {% if paginate_by == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if paginate_by == 100 %}selected{% endif %}>100</option>
+            </select>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Résumé sélection (pour la vue tableau uniquement) -->
+    <div class="selection-summary" id="selectionSummary" style="display: none;">
+        <div class="card">
+            <div class="card-body">
+                <div class="summary-content">
+                    <div class="summary-info">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <span class="count" id="selectedCount">0</span> collaborateur(s) sélectionné(s)
+                        </div>
+                    </div>
+                    
+                    <div class="summary-actions">
+                        <button class="btn-secondary btn-sm" id="deselectAll">
+                            <i class="fas fa-times"></i> Tout désélectionner
+                        </button>
+                        <button class="btn-primary btn-sm" id="sendBulkEmail">
+                            <i class="fas fa-envelope"></i> Envoyer email
+                        </button>
+                        <button class="btn-success btn-sm" id="exportSelected">
+                            <i class="fas fa-file-excel"></i> Exporter sélection
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal de confirmation pour la suppression -->
+<div class="modal" id="deleteConfirmationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Confirmation de suppression</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <h4>Êtes-vous sûr ?</h4>
+            <p>Vous êtes sur le point de supprimer le collaborateur :</p>
+            <p class="collaborateur-to-delete" id="collaborateurToDeleteName"></p>
+            <p class="warning-text">Cette action est irréversible. Toutes les données associées seront perdues.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <form method="post" action="" id="deleteForm" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash-alt"></i> Supprimer définitivement
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal réinitialisation mot de passe -->
+<div class="modal" id="resetPasswordModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-key"></i> Réinitialisation du mot de passe</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon" style="color: #f39c12;">
+                <i class="fas fa-key"></i>
+            </div>
+            <h4>Réinitialiser le mot de passe ?</h4>
+            <p>Un nouveau mot de passe sera généré et envoyé au collaborateur.</p>
+            <p class="info-text">Le mot de passe temporaire sera : <strong>@papel@</strong></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary modal-close-btn">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button class="btn-warning" id="confirmResetPassword">
+                <i class="fas fa-key"></i> Réinitialiser
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="{% static 'js/Collaborateurs/liste.js' %}"></script>
+
+<script>
+// Variables globales
+let currentCollaborateurId = null;
+let currentCollaborateurName = '';
+
+// Fonction pour changer le nombre de lignes par page
+function changeRowsPerPage(value) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('paginate_by', value);
+    url.searchParams.set('page', 1);
+    window.location.href = url.toString();
+}
+
+// Fonction pour basculer entre les vues
+document.addEventListener('DOMContentLoaded', function() {
+    const viewCardsBtn = document.getElementById('viewCards');
+    const viewTableBtn = document.getElementById('viewTable');
+    const viewModeInput = document.getElementById('viewMode');
+    const cardsView = document.getElementById('cardsView');
+    const tableView = document.getElementById('tableView');
+    
+    if (viewCardsBtn && viewTableBtn) {
+        viewCardsBtn.addEventListener('click', function() {
+            viewCardsBtn.classList.add('active');
+            viewTableBtn.classList.remove('active');
+            viewModeInput.value = 'cards';
+            cardsView.style.display = 'block';
+            tableView.style.display = 'none';
+            
+            // Mettre à jour l'URL sans recharger
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', 'cards');
+            window.history.pushState({}, '', url);
+        });
+        
+        viewTableBtn.addEventListener('click', function() {
+            viewTableBtn.classList.add('active');
+            viewCardsBtn.classList.remove('active');
+            viewModeInput.value = 'table';
+            tableView.style.display = 'block';
+            cardsView.style.display = 'none';
+            
+            // Mettre à jour l'URL sans recharger
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', 'table');
+            window.history.pushState({}, '', url);
+        });
+    }
+});
+
+// Fonctions pour les actions
+function toggleActions(id) {
+    const menu = document.getElementById(`menu-${id}`);
+    const allMenus = document.querySelectorAll('.actions-menu');
+    
+    allMenus.forEach(m => {
+        if (m.id !== `menu-${id}`) {
+            m.classList.remove('show');
+        }
+    });
+    
+    if (menu) {
+        menu.classList.toggle('show');
+    }
+}
+
+function resetPassword(id) {
+    currentCollaborateurId = id;
+    document.getElementById('resetPasswordModal').classList.add('active');
+}
+
+function toggleStatus(id) {
+    if (confirm('Voulez-vous changer le statut de ce collaborateur ?')) {
+        fetch(`/collaborateurs/${id}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors du changement de statut');
+            }
+        })
+        .catch(() => alert('Erreur de connexion'));
+    }
+}
+
+function deleteCollaborateur(id, name) {
+    currentCollaborateurId = id;
+    currentCollaborateurName = name;
+    document.getElementById('collaborateurToDeleteName').textContent = name;
+    document.getElementById('deleteConfirmationModal').classList.add('active');
+}
+
+// Gestionnaire pour la confirmation de suppression
+document.getElementById('confirmDelete')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (currentCollaborateurId) {
+        fetch(`/collaborateurs/${currentCollaborateurId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors de la suppression');
+            }
+        })
+        .catch(() => alert('Erreur de connexion'));
+    }
+    closeModal('deleteConfirmationModal');
+});
+
+// Gestionnaire pour la confirmation de réinitialisation
+document.getElementById('confirmResetPassword')?.addEventListener('click', function() {
+    if (currentCollaborateurId) {
+        fetch(`/collaborateurs/${currentCollaborateurId}/reset-password/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Mot de passe réinitialisé avec succès. Nouveau mot de passe: @papel@');
+            } else {
+                alert('Erreur lors de la réinitialisation');
+            }
+        })
+        .catch(() => alert('Erreur de connexion'))
+        .finally(() => closeModal('resetPasswordModal'));
+    }
+});
+
+// Fonctions pour les modals
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+    currentCollaborateurId = null;
+}
+
+// Fermer les modals en cliquant sur le X ou sur le bouton Annuler
+document.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const modal = this.closest('.modal');
+        if (modal) {
+            modal.classList.remove('active');
+            currentCollaborateurId = null;
+        }
+    });
+});
+
+// Fermer les modals en cliquant à l'extérieur
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+            currentCollaborateurId = null;
+        }
+    });
+});
+
+// Fermer le menu quand on clique ailleurs
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.btn-more') && !event.target.closest('.actions-menu')) {
+        document.querySelectorAll('.actions-menu').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+});
+
+// Sélection pour la vue tableau
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const selectionSummary = document.getElementById('selectionSummary');
+    const selectedCount = document.getElementById('selectedCount');
+    const deselectAllBtn = document.getElementById('deselectAll');
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.collaborateur-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateSelectionSummary();
+        });
+    }
+    
+    if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', function() {
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            document.querySelectorAll('.collaborateur-checkbox').forEach(cb => cb.checked = false);
+            updateSelectionSummary();
+        });
+    }
+    
+    document.querySelectorAll('.collaborateur-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateSelectionSummary);
+    });
+});
+
+function updateSelectionSummary() {
+    const checkboxes = document.querySelectorAll('.collaborateur-checkbox:checked');
+    const count = checkboxes.length;
+    const selectionSummary = document.getElementById('selectionSummary');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (count > 0 && document.getElementById('tableView').style.display !== 'none') {
+        selectionSummary.style.display = 'block';
+        selectedCount.textContent = count;
+    } else {
+        selectionSummary.style.display = 'none';
+    }
+}
+
+// Exports
+document.getElementById('exportExcel')?.addEventListener('click', function() {
+    window.location.href = '/collaborateurs/export/excel/?' + new URLSearchParams(window.location.search);
+});
+
+document.getElementById('exportPDF')?.addEventListener('click', function() {
+    window.location.href = '/collaborateurs/export/pdf/?' + new URLSearchParams(window.location.search);
+});
+
+document.getElementById('exportPrint')?.addEventListener('click', function() {
+    window.print();
+});
+
+document.getElementById('exportSelected')?.addEventListener('click', function() {
+    const selectedIds = Array.from(document.querySelectorAll('.collaborateur-checkbox:checked'))
+        .map(cb => cb.dataset.id);
+    
+    if (selectedIds.length === 0) {
+        alert('Veuillez sélectionner au moins un collaborateur');
+        return;
+    }
+    
+    fetch('/collaborateurs/export/selected/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ ids: selectedIds })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `collaborateurs_selectionnes.xlsx`;
+        a.click();
+    })
+    .catch(() => alert('Erreur lors de l\'export'));
+});
+
+document.getElementById('sendBulkEmail')?.addEventListener('click', function() {
+    const selectedIds = Array.from(document.querySelectorAll('.collaborateur-checkbox:checked'))
+        .map(cb => cb.dataset.id);
+    
+    if (selectedIds.length === 0) {
+        alert('Veuillez sélectionner au moins un collaborateur');
+        return;
+    }
+    
+    window.location.href = `/email/envoi-multiple/?ids=${selectedIds.join(',')}`;
+});
+
+// Soumission automatique des filtres
+document.querySelectorAll('#filterStatut, #filterPeriode').forEach(select => {
+    select.addEventListener('change', function() {
+        document.getElementById('filterForm').submit();
+    });
+});
+
+// Délai pour la recherche
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+    let timeout = null;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            if (this.value.length >= 3 || this.value.length === 0) {
+                document.getElementById('filterForm').submit();
+            }
+        }, 500);
+    });
+}
+
+// Recherche automatique avec délai
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const filterStatut = document.getElementById('filterStatut');
+    const filterPeriode = document.getElementById('filterPeriode');
+    const filterForm = document.getElementById('filterForm');
+    
+    // Recherche automatique avec délai (500ms après la frappe)
+    if (searchInput) {
+        let timeout = null;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                // Ne soumettre que si la recherche a au moins 3 caractères ou est vide
+                if (this.value.length >= 3 || this.value.length === 0) {
+                    filterForm.submit();
+                }
+            }, 500);
+        });
+    }
+    
+    // Soumission automatique pour les sélecteurs
+    if (filterStatut) {
+        filterStatut.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    
+    if (filterPeriode) {
+        filterPeriode.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    
+    // Gestion du mode d'affichage
+    const viewCardsBtn = document.getElementById('viewCards');
+    const viewTableBtn = document.getElementById('viewTable');
+    const viewModeInput = document.getElementById('viewMode');
+    const cardsView = document.getElementById('cardsView');
+    const tableView = document.getElementById('tableView');
+    
+    if (viewCardsBtn && viewTableBtn) {
+        viewCardsBtn.addEventListener('click', function() {
+            viewCardsBtn.classList.add('active');
+            viewTableBtn.classList.remove('active');
+            viewModeInput.value = 'cards';
+            
+            // Mettre à jour l'URL et soumettre le formulaire
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', 'cards');
+            window.location.href = url.toString();
+        });
+        
+        viewTableBtn.addEventListener('click', function() {
+            viewTableBtn.classList.add('active');
+            viewCardsBtn.classList.remove('active');
+            viewModeInput.value = 'table';
+            
+            // Mettre à jour l'URL et soumettre le formulaire
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', 'table');
+            window.location.href = url.toString();
+        });
+    }
+    
+    // Gestion du nombre d'éléments par page
+    const rowsPerPage = document.getElementById('rowsPerPage');
+    if (rowsPerPage) {
+        rowsPerPage.addEventListener('change', function() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('paginate_by', this.value);
+            url.searchParams.set('page', 1);
+            window.location.href = url.toString();
+        });
+    }
+});
+
+</script>
+{% endblock %}

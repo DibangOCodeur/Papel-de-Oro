@@ -235,6 +235,29 @@
                                 {% endif %}
                             </div>
 
+                            <div class="form-group">
+                                <label for="parrain">
+                                    <i class="fas fa-user-tie"></i> Parrain *
+                                </label>
+                                <div class="input-with-icon">
+                                    <select id="parrain" name="parrain" class="{% if form.parrain.errors %}input-error{% endif %}" required>
+                                        <option value="">Sélectionnez...</option>
+                                        {% for parrain in parrains %}
+                                            <option value="{{ parrain.id }}"
+                                                {% if form.parrain.value == parrain.id|stringformat:"s" %}selected{% endif %}>
+                                                {{  parrain.first_name }} {{ parrain.last_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="input-focus-line"></div>
+                                </div>
+                                {% if form.parrain.errors %}
+                                <div class="error-message">
+                                    {{ form.parrain.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+
                             <div class="form-group full-width">
                                 <label for="theme_memoire">
                                     <i class="fas fa-file-alt"></i> Thème du mémoire *

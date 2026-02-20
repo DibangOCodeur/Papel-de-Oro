@@ -39,19 +39,17 @@
             </div>
             <div class="stat-content">
                 <h3>Revenus totaux</h3>
-                <p class="stat-number">{{ montant_total|floatformat:0 }} FCFA</p>
-                <p class="stat-desc">Commission: {{ montant_total|floatformat:0 }} FCFA</p>
+                <p class="stat-number">{{ revenu|floatformat:0 }} FCFA</p>
             </div>
         </div>
         
         <div class="stat-card">
             <div class="stat-icon">
-                <i class="fas fa-file-invoice"></i>
+                <i class="fas fa-gift"></i>
             </div>
             <div class="stat-content">
-                <h3>Factures payées</h3>
-                <p class="stat-number">142</p>
-                <p class="stat-desc">14 en attente</p>
+                <h3>Participants a la Tombola</h3>
+                <p class="stat-number">{{ etudiants_tombola }}</p>
             </div>
         </div>
         
@@ -60,9 +58,9 @@
                 <i class="fas fa-graduation-cap"></i>
             </div>
             <div class="stat-content">
-                <h3>Mémoires imprimés</h3>
-                <p class="stat-number">89</p>
-                <p class="stat-desc">67 en attente</p>
+                <h3>Etudiants parrainés</h3>
+                <p class="stat-number">{{ total_parraines }}</p>
+                
             </div>
         </div>
     </section>

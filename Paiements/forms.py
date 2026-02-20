@@ -35,6 +35,14 @@ class PaiementForm(forms.ModelForm):
         widget=forms.HiddenInput()
     )
     
+    commission_parrain = forms.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        required=False,
+        initial=Decimal('0.00'),
+        widget=forms.HiddenInput()
+    )
+    
     montant_jeu_reduction = forms.DecimalField(
         max_digits=10, 
         decimal_places=2, 
@@ -46,7 +54,7 @@ class PaiementForm(forms.ModelForm):
     class Meta:
         model = Paiement
         fields = [
-            'source', 'frais_impression', 'commission', 
+            'source', 'frais_impression', 'commission', 'commission_parrain',
             'service_annexe', 'intitule_annexes',
             'jeu_reduction', 'frais_annexe',
             'montant_total', 'montant_jeu_reduction'
@@ -71,6 +79,7 @@ class PaiementForm(forms.ModelForm):
                 'class': 'form-check-input',
             }),
             'montant_total': forms.HiddenInput(),  # Calculé automatiquement
+            'commission_parrain': forms.HiddenInput(),  # Calculé automatiquement
         }
         labels = {
             'frais_impression': "Frais d'impression (FCFA)",
@@ -84,6 +93,7 @@ class PaiementForm(forms.ModelForm):
         if not self.instance.pk:  # Nouvel enregistrement
             self.initial['frais_impression'] = 0
             self.initial['commission'] = 0
+            self.initial['commission_parrain'] = Decimal('0.00')
             self.initial['montant_total'] = 0
     
     def clean(self):
@@ -144,9 +154,6 @@ class PaiementForm(forms.ModelForm):
         else:
             instance.montant_jeu_reduction = Decimal('0')
         
-        # CORRECTION: Ajout de la commission au montant total
-        commission = self.cleaned_data.get('commission', Decimal('0'))
-        montant_total += commission  # La commission s'ajoute au total
         
         instance.montant_total = montant_total
         

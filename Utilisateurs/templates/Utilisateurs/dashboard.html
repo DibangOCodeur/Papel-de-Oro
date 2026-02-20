@@ -76,6 +76,16 @@
                         </ul>
                     </li>
                     <li>
+                        <a href="#">
+                            <i class="fas fa-user-friends"></i>
+                            <span>Collaborateurs</span>
+                        </a>
+                        <ul>
+                            <li><a href="{% url 'inscription_collaborateur' %}">Ajouter un collaborateur</a></li>
+                            <li><a href="{% url 'liste_collaborateurs' %}">Liste des collaborateurs</a></li>
+                        </ul>
+                    </li>
+                    <li>
                         <a href="{% url 'liste_memoire' %}">
                             <i class="fas fa-file-upload"></i>
                             <span>Mémoires</span>
@@ -136,9 +146,9 @@
                     </div>
                 </div>
                 
-                <button class="btn-logout">
+                <a href="{% url 'deconnexion' %}" class="btn-logout">
                     <i class="fas fa-sign-out-alt"></i> Déconnexion
-                </button>
+                </a>
             </div>
         </aside>
         
@@ -360,104 +370,37 @@
                                 <div class="orders-table">
                                     <div class="table-header">
                                         <div class="col-student">Étudiant</div>
-                                        <div class="col-type">Type</div>
+                                        <div class="col-type">Parrain</div>
                                         <div class="col-status">Statut</div>
                                         <div class="col-amount">Montant</div>
                                         <div class="col-actions">Actions</div>
                                     </div>
 
-                                    
+                                    {% for participant in derniers_participants %}
                                     <div class="table-row">
                                         <div class="col-student">
                                             <div class="student-avatar">AK</div>
                                             <div class="student-info">
-                                                <strong>Amara Kouassi</strong>
-                                                <small>Licence 3</small>
-                                            </div>
+                                                <strong>{{ participant.etudiant.first_name }} {{ participant.etudiant.last_name }}</strong>
+                                                 <small>{{ participant.etudiant.niveau.niveau }}</small>
+                                           </div>
                                         </div>
-                                        <div class="col-type">Mémoire + Impression</div>
+                                        {% if participant.etudiant.parrain %}
+                                        <div class="col-type"> <strong>{{ participant.etudiant.parrain.first_name }} {{ participant.etudiant.parrain.last_name }}</strong></div>
+                                        {% else %}
+                                        <div class="col-type">Aucun</div>
+                                        {% endif %}
                                         <div class="col-status">
                                             <span class="status-badge processing">En traitement</span>
                                         </div>
-                                        <div class="col-amount">45,500 FCFA</div>
+                                        <div class="col-amount">{{ participant.montant_total|floatformat:0 }} FCFA</div>
                                         <div class="col-actions">
-                                            <button class="action-btn" title="Voir">
+                                            <a href="{% url 'detail_etudiant' participant.etudiant.id %}" class="action-btn" title="Voir">
                                                 <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="action-btn" title="Modifier">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
+                                            </a>
                                         </div>
                                     </div>
-                                    
-                                    <div class="table-row">
-                                        <div class="col-student">
-                                            <div class="student-avatar">FD</div>
-                                            <div class="student-info">
-                                                <strong>Fatou Diop</strong>
-                                                <small>Master 2</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-type">Impression seule</div>
-                                        <div class="col-status">
-                                            <span class="status-badge printed">Imprimé</span>
-                                        </div>
-                                        <div class="col-amount">36,000 FCFA</div>
-                                        <div class="col-actions">
-                                            <button class="action-btn" title="Voir">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="action-btn" title="Télécharger">
-                                                <i class="fas fa-download"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="table-row">
-                                        <div class="col-student">
-                                            <div class="student-avatar">KT</div>
-                                            <div class="student-info">
-                                                <strong>Koffi Traoré</strong>
-                                                <small>Licence 3</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-type">Mise en forme</div>
-                                        <div class="col-status">
-                                            <span class="status-badge delivered">Livré</span>
-                                        </div>
-                                        <div class="col-amount">3,000 FCFA</div>
-                                        <div class="col-actions">
-                                            <button class="action-btn" title="Voir">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="action-btn" title="Facture">
-                                                <i class="fas fa-receipt"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="table-row">
-                                        <div class="col-student">
-                                            <div class="student-avatar">MA</div>
-                                            <div class="student-info">
-                                                <strong>Mariam Abdou</strong>
-                                                <small>Master 2</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-type">Mémoire + Impression</div>
-                                        <div class="col-status">
-                                            <span class="status-badge pending">En attente</span>
-                                        </div>
-                                        <div class="col-amount">48,500 FCFA</div>
-                                        <div class="col-actions">
-                                            <button class="action-btn" title="Voir">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="action-btn" title="Accepter">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                    {% endfor %}
                                 </div>
                             </div>
                         </div>
@@ -477,8 +420,10 @@
                                     </a>
                                 </button>
                                 <button class="quick-action-btn">
-                                    <i class="fas fa-file-import"></i>
-                                    <span>Importer mémoires</span>
+                                    <a href="{% url 'inscription_collaborateur' %}" style="text-decoration: none;">
+                                    <i class="fas fa-user-friends"></i> <br>
+                                    <span>Ajouter Collaborateur</span>
+                                    </a>
                                 </button>
                                 <button class="quick-action-btn">
                                     <i class="fas fa-qrcode"></i>

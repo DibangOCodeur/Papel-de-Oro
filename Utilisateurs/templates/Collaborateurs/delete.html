@@ -1,0 +1,186 @@
+{% extends "Utilisateurs/base.html" %}
+{% load static %}
+
+{% block title %}Supprimer le collaborateur - {{ collaborateur.get_full_name }} - DbgMemo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/Collaborateurs/delete.css' %}">
+<style>
+    .delete-page-wrapper {
+        padding: 30px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .dashboard-header {
+        margin-bottom: 30px;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 32px;
+        font-weight: 600;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .dashboard-header h1 i {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 36px;
+    }
+    
+    .header-subtitle {
+        color: var(--text-light);
+        font-size: 15px;
+        margin-left: 48px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-page-wrapper">
+    <!-- En-tête avec breadcrumb -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <h1>
+                <i class="fas fa-trash-alt"></i>
+                Supprimer un collaborateur
+            </h1>
+            <div class="breadcrumb">
+                <a href="{% url 'liste_collaborateurs' %}">Liste des collaborateurs</a> 
+                <i class="fas fa-chevron-right"></i> 
+                <a href="{% url 'detail_collaborateur' collaborateur.id %}">{{ collaborateur.last_name }} {{ collaborateur.first_name }}</a>
+                <i class="fas fa-chevron-right"></i> 
+                <span>Supprimer</span>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <a href="{% url 'detail_collaborateur' collaborateur.id %}" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
+        </div>
+    </header>
+
+    <!-- Carte de confirmation de suppression -->
+    <div class="card delete-card">
+        <div class="card-body">
+            <div class="delete-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            
+            <h2>Êtes-vous sûr de vouloir supprimer ce collaborateur ?</h2>
+            
+            <p class="warning-message">
+                Cette action est <strong>irréversible</strong>. Toutes les données associées à ce collaborateur seront définitivement supprimées.
+            </p>
+            
+            <!-- Récapitulatif du collaborateur -->
+            <div class="collaborateur-summary">
+                <div class="summary-avatar">
+                    {% if collaborateur.avatar %}
+                        <img src="{{ collaborateur.avatar.url }}" alt="{{ collaborateur.get_full_name }}">
+                    {% else %}
+                        <div class="avatar-placeholder">
+                            {{ collaborateur.first_name|first|upper }}{{ collaborateur.last_name|first|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="summary-info">
+                    <h3>{{ collaborateur.last_name|upper }} {{ collaborateur.first_name }}</h3>
+                    <p class="matricule">{{ collaborateur.matricule }}</p>
+                    <p class="email">{{ collaborateur.email }}</p>
+                </div>
+                
+                <div class="summary-stats">
+                    <div class="stat">
+                        <span class="stat-label">Étudiants parrainés</span>
+                        <span class="stat-value">{{ collaborateur.nombre_etudiant|default:"0" }}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Commission totale</span>
+                        <span class="stat-value">{{ collaborateur.montant_total_parrain|floatformat:0 }} FCFA</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Liste des éléments qui seront supprimés -->
+            <div class="delete-warning">
+                <h4><i class="fas fa-exclamation-circle"></i> Les éléments suivants seront également supprimés :</h4>
+                
+                <ul class="delete-list">
+                    <li>
+                        <i class="fas fa-user-graduate"></i>
+                        <span>{{ collaborateur.nombre_etudiant|default:"0" }} étudiant(s) parrainé(s) (seront orphelins)</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Tous les reçus d'inscription associés</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-history"></i>
+                        <span>L'historique des commissions et paiements</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-id-card"></i>
+                        <span>Le matricule et le code de parrainage</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-lock"></i>
+                        <span>L'accès à la plateforme sera révoqué</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Formulaire de confirmation -->
+            <form method="post" class="delete-form">
+                {% csrf_token %}
+                
+                <div class="confirmation-checkbox">
+                    <input type="checkbox" id="confirm_delete" required>
+                    <label for="confirm_delete">
+                        Je comprends que cette action est irréversible et je confirme la suppression de ce collaborateur
+                    </label>
+                </div>
+                
+                <div class="form-actions">
+                    <a href="{% url 'detail_collaborateur' collaborateur.id %}" class="btn-secondary">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn-danger" id="submitBtn" disabled>
+                        <i class="fas fa-trash-alt"></i> Supprimer définitivement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Carte d'information supplémentaire -->
+    <div class="card info-card">
+        <div class="card-body">
+            <div class="info-message">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <strong>Note :</strong> La suppression d'un collaborateur n'affecte pas les étudiants qu'il a parrainés, mais ils ne seront plus associés à aucun collaborateur. Vous pourrez toujours les réaffecter à un autre collaborateur ultérieurement.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmCheckbox = document.getElementById('confirm_delete');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        confirmCheckbox.addEventListener('change', function() {
+            submitBtn.disabled = !this.checked;
+        });
+    });
+</script>
+{% endblock %}
